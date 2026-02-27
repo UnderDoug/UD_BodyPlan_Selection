@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<embarkmodules>
+  <module Class="XRL.CharacterBuilds.Qud.Qud_UD_BodyPlanModule">
+    <window ID="Chargen/UD_BodyPlan" Prefab="CategoryMenus" Class="XRL.CharacterBuilds.Qud.UI.Qud_UD_BodyPlanModuleWindow">
+      <name>Body Plan</name>
+      <title>:choose body plan:</title>
+    </window>
+  </module>
+</embarkmodules>
