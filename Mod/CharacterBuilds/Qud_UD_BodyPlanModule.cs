@@ -7,6 +7,7 @@ using ConsoleLib.Console;
 
 using UD_BodyPlan_Selection.Mod;
 
+using XRL.CharacterBuilds.Qud.UI;
 using XRL.Collections;
 using XRL.UI.Framework;
 using XRL.World;
@@ -29,34 +30,48 @@ namespace XRL.CharacterBuilds.Qud
 
             public string GetDescription()
             {
-                sb.Clear();
+                SB.Clear();
 
-                sb.Append(Anatomy?.Name.SplitCamelCase() ?? MISSING_ANATOMY);
+                SB.Append(Anatomy?.Name.SplitCamelCase() ?? MISSING_ANATOMY);
                 if (IsDefault)
-                    sb.Append(" (default)");
+                    SB.Append(" (default)");
 
-                return sb.ToString();
+                return SB.ToString();
             }
 
             public string GetLongDescription(bool IncludeOpening = false)
             {
-                sb.Clear();
+                SB.Clear();
 
-                var limbs = new Dictionary<string, int>();
-                if (Anatomy?.Parts?.Select(ap => ap?.Type?.Name ?? "MISSING_PART") is IEnumerable<string> partNames)
-                    foreach (string limb in partNames)
+                var limbCounts = new Dictionary<BodyPartType, int>();
+                if (Anatomy?.Parts.Select(a => a.Type) is IEnumerable<BodyPartType> limbs)
+                    foreach (BodyPartType limb in limbs)
                     {
-                        if (limbs.ContainsKey(limb))
-                            limbs[limb]++;
+                        if (limbCounts.ContainsKey(limb))
+                            limbCounts[limb]++;
                         else
-                            limbs[limb] = 1;
+                            limbCounts[limb] = 1;
                     }
 
-                return sb
-                    .Append(limbs.Aggregate(
-                        seed: IncludeOpening ? "Contains the following body parts:" : "",
-                        func: (a, n) => a + (!a.IsNullOrEmpty() ? "\n" : null) + "{{W|" + n.Value.Things("}}x {{W|" + n.Key) + "}}"))
-                    .ToString();
+                if (IncludeOpening)
+                    SB.Append("Contains the following body parts:");
+
+                foreach ((BodyPartType limb, int count) in limbCounts)
+                {
+                    if (!SB.IsNullOrEmpty())
+                        SB.AppendLine();
+
+                    string timesColored = "}}x {{W|";
+                    string limbName = timesColored + limb.Name;
+                    string limbPluralName = null;
+                    if (limb.Plural.GetValueOrDefault())
+                        limbPluralName = limbName;
+
+                    SB.Append("{{W|").Append(count.Things(limbName, limbPluralName)).Append("}}");
+                    if (!limb.Name.EqualsNoCase(limb.FinalType))
+                        SB.Append(" (").Append(limb.FinalType).Append(")");
+                }
+                return SB.ToString();
             }
 
             public Renderable GetRenderable()
@@ -68,15 +83,26 @@ namespace XRL.CharacterBuilds.Qud
                 return Renderable;
             }
 
+            private static string GetTile(GameObjectBlueprint Blueprint)
+                => Blueprint.GetPartParameter<string>(nameof(Render), nameof(Render.Tile))
+                ;
+            private static string GetAnatomy(GameObjectBlueprint Blueprint)
+                => Blueprint.GetPartParameter<string>(nameof(Body), nameof(Body.Anatomy))
+                ;
             public bool IsEligibleForDisplay(GameObjectBlueprint Blueprint)
                 => Blueprint != null
                 && (!Blueprint.IsBaseBlueprint()
-                    || Blueprint.HasPartParameter(nameof(Render), nameof(Render.Tile)))
+                    || GetTile(Blueprint) != null)
                 && !Blueprint.HasTag("Golem")
+                && ((GetTile(Blueprint) is string renderTile
+                        && !renderTile.Contains("sw_farmer"))
+                    || (GetAnatomy(Blueprint)?.EqualsNoCase("Humanoid") ?? false))
+                && !Blueprint.Name.Contains("Cherub")
                 ;
             public bool HasMatchingAnatomy(GameObjectBlueprint Blueprint)
                 => Blueprint != null
-                && Blueprint.TryGetPartParameter(nameof(Body), nameof(Body.Anatomy), out string anatomy) && anatomy == Anatomy.Name
+                && GetAnatomy(Blueprint) is string anatomy
+                && anatomy == Anatomy.Name
                 ;
             public bool ObjectAnimatesWithAnatomy(GameObjectBlueprint Blueprint)
                 => Blueprint != null
@@ -125,7 +151,8 @@ namespace XRL.CharacterBuilds.Qud
             && Anatomy.BodyCategory != BodyPartCategory.LIGHT
             && Anatomy.Category != BodyPartCategory.MECHANICAL
             && Anatomy.Name != "HumanoidWithHandsFace"
-            && true.LogReturning(Anatomy.Name)
+            && Anatomy.Name != "Echinoid"
+            // && true.LogReturning(Anatomy.Name)
             ;
         public static AnatomyChoice AnatomyToChoice(Anatomy Anatomy)
             => new () { Anatomy = Anatomy }
@@ -135,6 +162,19 @@ namespace XRL.CharacterBuilds.Qud
             ?.Select(AnatomyToChoice)
             ?.OrderBy(a => a.Anatomy.Name)
             ;
+
+        private AnatomyChoice _PlayerAnatomyChoice; 
+        public AnatomyChoice PlayerAnatomyChoice
+        {
+            get
+            {
+                if (_PlayerAnatomyChoice == null
+                    && GetDefaultPlayerBodyPlan() is string playerAnatomyName)
+                    _PlayerAnatomyChoice = AnatomyChoices.FirstOrDefault(a => a?.Anatomy?.Name == playerAnatomyName);
+
+                return _PlayerAnatomyChoice;
+            }
+        }
 
         public override AbstractEmbarkBuilderModuleData DefaultData => GetDefaultData();
 
@@ -147,17 +187,19 @@ namespace XRL.CharacterBuilds.Qud
                 {
                     _AnatomyChoices ??= new();
                     _AnatomyChoices.AddRange(BaseAnatomyChoices.Where(a => a.GetDescription() != AnatomyChoice.MISSING_ANATOMY));
+                    _AnatomyChoices.RemoveAll(c => c == null);
                     SetDefautChoice();
                 }
                 return _AnatomyChoices;
             }
         }
 
-        protected static StringBuilder sb = new();
+        protected static StringBuilder SB = new();
 
         public Qud_UD_BodyPlanModule()
         {
             _AnatomyChoices = null;
+            _PlayerAnatomyChoice = null;
         }
 
         public override void InitFromSeed(string seed)
@@ -167,9 +209,25 @@ namespace XRL.CharacterBuilds.Qud
             => builder.IsEditableGameMode();
 
         public override bool shouldBeEnabled()
-            => builder.GetModule<QudGenotypeModule>()?.data?.Entry is GenotypeEntry genoType
-            && !genoType.IsTrueKin
+            => builder.GetModule<QudGenotypeModule>()?.data?.Entry is GenotypeEntry genotypeEntry
+            && !genotypeEntry.IsTrueKin
             && builder?.GetModule<QudSubtypeModule>()?.data?.Subtype != null;
+
+        private static bool IsQudQudMutationsModuleWindowDescriptor(EmbarkBuilderModuleWindowDescriptor Descriptor)
+            => Descriptor.viewID == "Chargen/Mutations"
+            ;
+        public override void assembleWindowDescriptors(List<EmbarkBuilderModuleWindowDescriptor> windows)
+        {
+            /*
+            foreach (EmbarkBuilderModuleWindowDescriptor descriptor in windows)
+                UnityEngine.Debug.Log(descriptor?.viewID ?? "No viewID");
+            */
+            int index = windows.FindIndex(IsQudQudMutationsModuleWindowDescriptor);
+            if (index < 0)
+                base.assembleWindowDescriptors(windows);
+            else
+                windows.InsertRange(index + 1, this.windows.Values);
+        }
 
         public override SummaryBlockData GetSummaryBlock()
         {
@@ -183,6 +241,7 @@ namespace XRL.CharacterBuilds.Qud
                 SortOrder = 50
             };
         }
+
         public override object handleBootEvent(
             string id,
             XRLGame game,
@@ -193,22 +252,21 @@ namespace XRL.CharacterBuilds.Qud
             if (id == QudGameBootModule.BOOTEVENT_BOOTPLAYEROBJECT)
             {
                 if (data == null
-                    || data.Selections.IsNullOrEmpty())
+                    || data.Selection == null)
                 {
                     MetricsManager.LogWarning("Body Plan module was active but data or selections was null or empty.");
                     return element;
                 }
                 if (element is GameObject player
                     && player.Body is Body playerBody)
-                    playerBody.Rebuild(data.Selections[0].Anatomy);
+                    playerBody.Rebuild(data.Selection.Anatomy);
             }
             return base.handleBootEvent(id, game, info, element);
         }
 
         public override string DataErrors()
         {
-            if (data != null
-                && !AnatomyChoices.Any(IsSelected))
+            if (!AnatomyChoices.Any(IsSelected))
                 return "Invalid choice selected";
 
             return base.DataErrors();
@@ -223,16 +281,27 @@ namespace XRL.CharacterBuilds.Qud
                 && module is not QudSubtypeModule)
                 return;
 
-            if (GetDefaultPlayerBodyPlan() is string playerAnatomyName
-                && AnatomyChoices.FirstOrDefault(a => a.Anatomy != null && a.Anatomy.Name == playerAnatomyName) is AnatomyChoice playerAnatomyChoice
-                && !playerAnatomyChoice.Equals(default))
+            if (module == this)
+                return;
+
+            OrganizeAnatomyChoices();
+        }
+
+        public void OrganizeAnatomyChoices(bool SelectDefaultChoice = false)
+        {
+            _PlayerAnatomyChoice = null;
+            if (PlayerAnatomyChoice != null
+                && AnatomyChoices[0] != PlayerAnatomyChoice)
             {
                 AnatomyChoices.OrderBy(a => a.Anatomy.Name);
-                AnatomyChoices.Remove(playerAnatomyChoice);
-                AnatomyChoices.Insert(0, playerAnatomyChoice);
-                SetDefautChoice();
+                AnatomyChoices.Remove(PlayerAnatomyChoice);
+                AnatomyChoices.Insert(0, PlayerAnatomyChoice);
+                SetDefautChoice(SelectDefaultChoice);
             }
         }
+
+        public void PickAnatomy(int n)
+            => setData(new Qud_UD_BodyPlanModuleData(AnatomyChoices[n]));
 
         private string GetPlayerBlueprint()
         {
@@ -249,28 +318,27 @@ namespace XRL.CharacterBuilds.Qud
                 ?.GetPartParameter<string>(nameof(Body), nameof(Body.Anatomy));
 
         public Qud_UD_BodyPlanModuleData GetDefaultData()
-            => AnatomyChoices.FirstOrDefault(a => a?.Anatomy?.Name == GetDefaultPlayerBodyPlan()) is AnatomyChoice defaultChoice
-            ? new(defaultChoice)
-            : new();
+            => new(PlayerAnatomyChoice);
 
-        public void SetDefautChoice()
+        public void SetDefautChoice(bool SelectDefaultChoice = false)
         {
-            if (shouldBeEnabled()
-                && _AnatomyChoices.FirstOrDefault(a => a?.Anatomy?.Name == GetDefaultPlayerBodyPlan()) is AnatomyChoice defaultChoice)
+            if (PlayerAnatomyChoice is AnatomyChoice defaultChoice)
+            {
                 defaultChoice.IsDefault = true;
+
+                if (SelectDefaultChoice
+                    && (data.Selection == null
+                        || data.Selection.Anatomy.IsNullOrEmpty()))
+                    data.Selection = new(defaultChoice);
+            }
         }
 
         public bool IsSelected(AnatomyChoice Choice)
-        {
-            if (data == null)
-                return false;
-
-            if (data.Selections.Count == 0)
-                return Choice.Anatomy == null;
-
-            return data.Selections[0] is Qud_UD_BodyPlanModuleDataRow bodyPlanDataRow
-                && bodyPlanDataRow.Anatomy == Choice.Anatomy?.Name;
-        }
+            => Choice != null
+            && data != null
+            && ((Choice.Anatomy == null
+                    && data.Selection == null)
+                || Choice.Anatomy?.Name == data.Selection.Anatomy);
 
         public AnatomyChoice SelectedChoice()
             => AnatomyChoices.Find(IsSelected);
