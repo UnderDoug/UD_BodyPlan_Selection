@@ -24,6 +24,9 @@ namespace XRL.CharacterBuilds.Qud.UI
 
         protected const string CHECKED = "[■]";
 
+        // don't remove this. It's what allows the first call to UpdateControls() to actually update the controls.
+        public EmbarkBuilderModuleWindowDescriptor windowDescriptor;
+
         private List<CategoryMenuData> AnatomiesMenuState = new();
 
         private List<Qud_UD_BodyPlanModule.AnatomyChoice> AnatomyChoices => module?.AnatomyChoices;
@@ -42,6 +45,12 @@ namespace XRL.CharacterBuilds.Qud.UI
         }
         public override void BeforeShow(EmbarkBuilderModuleWindowDescriptor descriptor)
         {
+            bool overrideHasShown = true;
+            if (descriptor != null)
+                windowDescriptor = descriptor;
+            else
+                overrideHasShown = false;
+
             TrySetupModuleData();
 
             prefabComponent.onSelected.RemoveAllListeners();
@@ -50,19 +59,10 @@ namespace XRL.CharacterBuilds.Qud.UI
             if (!module.HasSelection)
                 SelectDefaultChoice(true, false);
 
-            UpdateControls();
+            UpdateControls(overrideHasShown);
 
             base.BeforeShow(descriptor);
         }
-        /*
-        public override void Show()
-        {
-            base.Show();
-            TrySetupModuleData();
-
-            UpdateControls();
-        }
-        */
         public override GameObject InstantiatePrefab(GameObject prefab)
         {
             prefab.GetComponentInChildren<CategoryMenusScroller>().allowVerticalLayout = false;
@@ -112,7 +112,7 @@ namespace XRL.CharacterBuilds.Qud.UI
                 this.UpdateControls();
         }
 
-        public void UpdateControls()
+        public void UpdateControls(bool OverrideHasShown = false)
         {
             AnatomiesMenuState = new();
             var categoryMenuData = new CategoryMenuData
@@ -166,7 +166,12 @@ namespace XRL.CharacterBuilds.Qud.UI
             // This method exists in two conditionally loaded partials:
             // PreBeta/CharacterBuilds/UI and Beta/CharacterBuilds/UI
             if (!SkippingUIUpdates())
-                prefabComponent.BeforeShow(descriptor, AnatomiesMenuState);
+            {
+                if (OverrideHasShown)
+                    prefabComponent.hasShown = false;
+
+                prefabComponent.BeforeShow(windowDescriptor, AnatomiesMenuState);
+            }
 
             if (module?.HasSelection ?? false)
                 GetOverlayWindow().nextButton.navigationContext.ActivateAndEnable();

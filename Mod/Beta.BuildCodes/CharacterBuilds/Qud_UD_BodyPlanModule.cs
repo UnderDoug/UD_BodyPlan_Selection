@@ -6,7 +6,7 @@ namespace XRL.CharacterBuilds.Qud
     {
         public override string GetRequiredMod()
             => SelectedChoice() != PlayerAnatomyChoice
-            ? Utils.ThisMod.DisplayTitle
+            ? $"{Utils.ThisMod.DisplayTitle} (Anatomy: {SelectedChoice()?.Anatomy?.Name ?? AnatomyChoice.MISSING_ANATOMY})"
             : null;
     }
 }

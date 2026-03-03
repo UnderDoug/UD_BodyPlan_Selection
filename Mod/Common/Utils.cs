@@ -113,7 +113,7 @@ namespace UD_BodyPlan_Selection.Mod
             get
             {
                 if (_AnatomyExclusions.IsNullOrEmpty())
-                    _AnatomyExclusions = GameObjectFactory.Factory.GetBlueprintsInheritingFrom("UD_BodyPlan_Selection_BaseExclusion")
+                    _AnatomyExclusions = GameObjectFactory.Factory?.GetBlueprintsInheritingFrom("UD_BodyPlan_Selection_BaseExclusion")
                         .Select(bp => new AnatomyExclusion(bp))
                         .ToList();
 
@@ -179,7 +179,7 @@ namespace UD_BodyPlan_Selection.Mod
         #endregion
         #region Wishes
 
-        public static string UD_BPS_Output => DataManager.SavePath("TileTags.xml");
+        public static string UD_BPS_Output => DataManager.SavePath("AnatomyTiles.xml");
 
         [ModSensitiveStaticCache]
         public static List<AnatomyChoice> AnatomyChoices = new();
@@ -197,33 +197,60 @@ namespace UD_BodyPlan_Selection.Mod
                     writer.WriteLine2("<?xml version=\"1.0\" encoding=\"utf-8\" ?>")
                         .WriteLine2("<objects>")
                             .WriteLine2("<object Name=\"UD_BodyPlan_Slection_AnatomyTiles\" Inherits=\"DataBucket\" >", Indent: 1);
-
+                    var sB = Event.NewStringBuilder();
+                    var attributes = new Dictionary<string, object>();
                     for (int i = 0; i < anatomyChoices.Count; i++)
-                        if (anatomyChoices[i] is AnatomyChoice anatomyChoice)
+                        if (anatomyChoices[i]?.Anatomy is Anatomy anatomy)
                         {
                             if (i > 0)
                                 writer.WriteLine2("");
-
-                            if (anatomyChoices[i].GetExampleBlueprints().ToList() is List<GameObjectBlueprint> blueprints)
+                            
+                            if (anatomyChoices[i].GetExampleBlueprints().ToList() is List<GameObjectBlueprint> blueprints
+                                && !blueprints.IsNullOrEmpty())
                             {
-
                                 int count = blueprints.Count();
                                 for (int j = 0; j < count; j++)
                                     if (blueprints[j] is GameObjectBlueprint blueprint
                                         && blueprint.GetRenderable() is Renderable renderable)
-                                        writer.WriteLine2($"<!--xtagUD_BDS_{anatomyChoice.Anatomy.Name.Replace("-", "_").Replace(" ", "_")} " +
-                                            (IncludeName ? $"Name=\"{blueprint.Name}\" " : null) +
-                                            $"Tile=\"{renderable.Tile}\" " +
-                                            $"RenderString=\"{renderable?.RenderString}\" " +
-                                            $"ColorString=\"{renderable?.ColorString}\" " +
-                                            $"TileColor=\"{renderable?.TileColor}\" " +
-                                            $"DetailColor=\"{renderable?.DetailColor}\" " +
-                                            $"/-->", 2);
+                                    {
+                                        if (renderable?.Tile is string tile)
+                                            attributes[nameof(renderable.Tile)] = tile;
+
+                                        if (renderable?.RenderString is string renderString)
+                                            attributes[nameof(renderable.RenderString)] = renderString;
+
+                                        if (renderable?.ColorString is string colorString)
+                                            attributes[nameof(renderable.ColorString)] = colorString;
+
+                                        if (renderable?.TileColor is string tileColor)
+                                            attributes[nameof(renderable.TileColor)] = tileColor;
+
+                                        if (renderable?.DetailColor is char detailColor)
+                                            attributes[nameof(renderable.DetailColor)] = detailColor;
+
+                                        if (!attributes.IsNullOrEmpty())
+                                        {
+                                            sB.Append($"<!--xtagUD_BDS_{anatomy.Name.Replace("-", "_").Replace(" ", "_")} ");
+
+                                            if (IncludeName)
+                                                sB.Append($"Blueprint=\"{blueprint.Name}\" ");
+
+                                            foreach ((string attribute, object value) in attributes)
+                                                sB.Append($"{attribute}=\"{value}\" ");
+
+                                            sB.Append($"/-->");
+
+                                            writer.WriteLine2(sB.ToString(), 2);
+                                            sB.Clear();
+                                            attributes.Clear();
+                                        }
+                                    }
                             }
                             else
-                                writer.WriteLine2($"<!--xtagUD_BDS_{anatomyChoice.Anatomy.Name} " +
-                                    $"Name=\"default\" " +
+                                writer.WriteLine2($"<!--xtagUD_BDS_{anatomy.Name} " +
+                                    (IncludeName ? $"Blueprint=\"default\" " : null) +
                                     $"Tile=\"Creatures/sw_mimic.bmp\" " +
+                                    $"RenderString=\"*\" " +
                                     $"ColorString=\"&amp;w^y\" " +
                                     $"TileColor=\"&amp;w\" " +
                                     $"DetailColor=\"y\" " +

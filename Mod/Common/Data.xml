@@ -12,7 +12,7 @@
       Tile="TileWhenTransformed"
       RenderString="%"
       DetailColor="m"
-      Species=""
+     
       Property="PropertySetWhenRecipeConsumed"
       Mutations="List,OfMutations,WhenTransformed" />
     <tag Name="Optional" Value="true" />
@@ -61,5 +61,5 @@
     <tag Name="ExceptionMessage" Value="Has the {{C|Crystallinity}} mutation." />
     <tag Name="ExceptionSummary" Value="Has {{C|Crystallinity}}" />
   </object>
-  
+
 </objects>

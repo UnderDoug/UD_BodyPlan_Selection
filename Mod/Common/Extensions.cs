@@ -115,6 +115,34 @@ namespace UD_BodyPlan_Selection.Mod
             => Count.Aggregate(SB, (a, n) => a.AppendLine())
             ;
 
+        public static StringBuilder AppendDamage(this StringBuilder SB, string Damage)
+            => SB.AppendColored("r", "\u0003").Append(Damage)
+            ;
+        public static StringBuilder AppendDamage(this StringBuilder SB, string Color, string Damage)
+            => SB.AppendColored("r", "\u0003").AppendColored(Color, Damage)
+            ;
+
+        public static StringBuilder AppendAV(this StringBuilder SB, int AV)
+            => SB.AppendColored("b", "\u0004").Append(AV)
+            ;
+        public static StringBuilder AppendAV(this StringBuilder SB, string Color, int AV)
+            => SB.AppendColored("b", "\u0004").AppendColored(Color, AV.ToString())
+            ;
+
+        public static StringBuilder AppendDV(this StringBuilder SB, int DV)
+            => SB.AppendColored("K", "\t").Append(DV)
+            ;
+        public static StringBuilder AppendDV(this StringBuilder SB, string Color, int DV)
+            => SB.AppendColored("K", "\t").AppendColored(Color, DV.ToString())
+            ;
+
+        public static StringBuilder AppendArmor(this StringBuilder SB, int AV, int DV)
+            => SB.AppendAV(AV).Append(' ').AppendDV(DV)
+            ;
+        public static StringBuilder AppendArmor(this StringBuilder SB, string Color, int AV, int DV)
+            => SB.AppendAV(Color, AV).Append(' ').AppendDV(Color, DV)
+            ;
+
         public static bool EndsWithAny(this string String, params string[] Values)
             => Values.IsNullOrEmpty()
             || Values.Any(s => String.EndsWith(s));
@@ -138,5 +166,82 @@ namespace UD_BodyPlan_Selection.Mod
         public static StreamWriter WriteLine4(this StreamWriter Writer, string Value, int Indent = 0)
             => Writer.WriteLine2(Value, Indent * 2)
             ;
+
+        /*
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="BodyPart">The body part from which to produce a limb tree.</param>
+        /// <param name="Selector">The type parameters of this Func match the other arguments of this method: <paramref name="BodyPart"/>, <paramref name="Proc"/>, <paramref name="IndentDrawing"/>, <paramref name="DepthLimit"/>, <paramref name="Depth"/>, <paramref name="SiblingOrdinal"/>, <paramref name="SiblingCardinal"/>; returning one element of this method's return value.</param>
+        /// <param name="Proc">Processing to be performed on <paramref name="BodyPart"/> to get a display value for it.</param>
+        /// <param name="IndentDrawing">Records what should appear at each level of the indent.</param>
+        /// <param name="DepthLimit">The maximum depth that indentation should go (truncates anything in excess).</param>
+        /// <param name="Depth">The current depth of indentation.</param>
+        /// <param name="SiblingOrdinal">The index of the <paramref name="BodyPart"/> in the parent collection of elements in which it might exist.</param>
+        /// <param name="SiblingCardinal">The total number of elements in the parent collection in which the <paramref name="BodyPart"/> might exist.</param>
+        /// <returns>A collection of strings representing the <paramref name="BodyPart"/> and any subparts it might have in a tree configuration.</returns>
+        public static IEnumerable<string> GetLimbTreeLines(
+            this BodyPart BodyPart,
+            Func<BodyPart, Func<BodyPart, string>, Dictionary<int, char>, int, int, int, string> Selector,
+            Func<BodyPart, string> Proc,
+            Dictionary<int, char> IndentDrawing,
+            int DepthLimit = int.MaxValue,
+            int Depth = 0,
+            int SiblingOrdinal = 1,
+            int SiblingCardinal = 1
+            )
+        {
+            IndentDrawing ??= new();
+            if (BodyPart == null)
+                yield break;
+
+            yield return Selector(BodyPart, Proc, IndentDrawing, Depth, SiblingOrdinal, SiblingCardinal);
+            if (Depth >= DepthLimit)
+                yield break;
+
+            if (BodyPart.LoopSubparts() is IEnumerable<BodyPart> subparts)
+            {
+                int children = subparts.Count();
+                int child = 0;
+                if (subparts.SelectMany(o => o.GetLimbTreeLines(Selector, Proc, IndentDrawing, DepthLimit, Depth + 1, ++child, children)) is IEnumerable<string> subResults)
+                    foreach (string subResult in subResults)
+                        yield return subResult;
+            }
+        }
+        public static string GetLimbBranch(
+            BodyPart BodyPart,
+            Func<BodyPart, string> Proc,
+            Dictionary<int, char> IndentDrawing,
+            int Depth,
+            int Ordinal,
+            int Cardinal
+            )
+        {
+            var indent = Event.NewStringBuilder();
+
+            const char NBSP = '\u00ff'; // non-breaking space
+            const char VERT = '\u00b3'; // vertical
+            const char UANR = '\u00c0'; // up and right
+            const char VERR = '\u00c3'; // vertical and right
+
+            char prefixDrawing = Ordinal == Cardinal ? UANR : VERR;
+            IndentDrawing[Depth] = Ordinal == Cardinal ? NBSP : VERT;
+
+            for (int i = 0; i < Depth; ++i)
+                indent.Append(IndentDrawing.GetValueOrDefault(i, NBSP));
+
+            char prefix = Depth == 0 ? NBSP : prefixDrawing;
+            string line = $"{indent}{prefix}{Proc(BodyPart)}";
+            indent.Clear();
+            return line;
+        }
+        public static string GetLimbTree(Body Body,
+            Func<BodyPart, string> Proc,
+            int DepthLimit = int.MaxValue
+            )
+        {
+
+        }
+        */
     }
 }

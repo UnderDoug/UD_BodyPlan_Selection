@@ -126,14 +126,26 @@ namespace XRL.CharacterBuilds.Qud
             private string _LongDescription;
             public string LongDescription => _LongDescription ??= GetLongDescription(IncludeOpening: true);
 
+            private string _LongDescriptionNoOpen;
+            public string LongDescriptionNoOpen => _LongDescriptionNoOpen ??= GetLongDescription();
+
             private string _LongDescriptionSummary;
             public string LongDescriptionSummary => _LongDescriptionSummary ??= GetLongDescription(Summary: true, IncludeOpening: true);
+
+            private string _LongDescriptionNoOpenSummary;
+            public string LongDescriptionNoOpenSummary => _LongDescriptionNoOpenSummary ??= GetLongDescription(Summary: true);
 
             private string _LongDescriptionTK;
             public string LongDescriptionTK => _LongDescriptionTK ??= GetLongDescription(IncludeOpening: true, IsTrueKin: true);
 
+            private string _LongDescriptionNoOpenTK;
+            public string LongDescriptionNoOpenTK => _LongDescriptionNoOpenTK ??= GetLongDescription(IsTrueKin: true);
+
             private string _LongDescriptionTKSummary;
             public string LongDescriptionTKSummary => _LongDescriptionTKSummary ??= GetLongDescription(Summary: true, IncludeOpening: true, IsTrueKin: true);
+
+            private string _LongDescriptionNoOpenTKSummary;
+            public string LongDescriptionNoOpenTKSummary => _LongDescriptionNoOpenTKSummary ??= GetLongDescription(Summary: true, IsTrueKin: true);
 
             public AnatomyChoice()
             {
@@ -200,65 +212,15 @@ namespace XRL.CharacterBuilds.Qud
                 if (Anatomy == null)
                     return SB.ToString();
 
-                /*
-                if (Anatomy.Sucks())
-                {
-                    if (!Summary)
-                        SB.AppendColored("r", "This body plan will be difficult to play with.")
-                            .AppendLine();
-                    else
-                        SB.AppendColored("r", "Difficult to play.");
-                    SB.AppendLine();
-                }
-                */
-
-                if (Anatomy.HasRecipe())
-                {
-                    if (!Summary)
-                        SB.AppendColored("m", "There is a cooking recipe to get this body plan.")
-                            .AppendLine();
-                    else
-                        SB.AppendColored("m", "Avaialable via cooking");
-                    SB.AppendLine();
-                }
-
-                if (((AnatomyExclusion?.IsMechanical ?? false)
-                        || Anatomy?.Category == BodyPartCategory.MECHANICAL)
-                    && !Options.EnableBodyPlansThatAreRoboticWithoutMakingYouRobotic)
-                {
-                    if (!Summary)
-                        SB.AppendColored("c", "You will be made mechanical with this body plan.")
-                            .AppendLine();
-                    else
-                        SB.AppendColored("c", "You are mechanical");
-                    SB.AppendLine();
-                }
-
-                if (!Summary
-                    && AnatomyExclusion?.ExceptionMessage is string exceptionMessage
-                    && !exceptionMessage.IsNullOrEmpty())
-                    SB.Append(exceptionMessage)
-                        .AppendLine()
-                        .AppendLine();
-
-                if (Summary
-                    && AnatomyExclusion?.ExceptionSummary is string exceptionSummary
-                    && !exceptionSummary.IsNullOrEmpty())
-                    SB.Append(exceptionSummary)
-                        .AppendLine();
-
-                if (IncludeOpening)
-                {
-                    if (!Summary)
-                        SB.Append("Includes the following body part slots:");
-                    else
-                        SB.Append("Included parts:");
-                }
-
                 SampleCreature ??= GameObject.CreateSample("Humanoid");
                 Anatomy.ApplyTo(SampleCreature.Body);
                 if (!Summary)
                 {
+                    GetLongDescriptionExtras(SB, Summary);
+
+                    if (IncludeOpening)
+                        GetLongDescriptionOpening(SB, Summary);
+
                     bool anyHasNatEquip = false;
                     foreach (BodyPart bodyPart in SampleCreature.Body.GetParts())
                     {
@@ -283,8 +245,11 @@ namespace XRL.CharacterBuilds.Qud
                 }
                 else
                 {
+                    if (IncludeOpening)
+                        GetLongDescriptionOpening(SB, Summary);
+
                     var limbCounts = new Dictionary<BodyPartType, int>();
-                    if (SampleCreature.Body.GetParts().Select(p => p.TypeModel()) is IEnumerable<BodyPartType> limbs)
+                    if (SampleCreature.Body.GetParts().Select(p => p.VariantTypeModel()) is IEnumerable<BodyPartType> limbs)
                         foreach (BodyPartType limb in limbs)
                         {
                             if (limbCounts.ContainsKey(limb))
@@ -298,24 +263,80 @@ namespace XRL.CharacterBuilds.Qud
                         if (!SB.IsNullOrEmpty())
                             SB.AppendLine();
 
-                        string timesColored = "}}x {{W|";
-                        string limbName = timesColored + limb.Name;
+                        string timesColored = "}}x {{Y|";
+                        string limbName = limb.FinalType.ToLower();
                         string limbPluralName = null;
+
+                        if (limb.DescriptionPrefix?.ToLower() is string prefix)
+                            limbName = $"{prefix} {limbName}";
+
+                        limbName = timesColored + limbName;
+
                         if (limb.Plural.GetValueOrDefault())
                             limbPluralName = limbName;
 
                         if (limbName.EqualsNoCase("foot"))
                             limbPluralName = timesColored + "feet";
 
-                        SB.Append("{{W|").Append(count.Things(limbName, limbPluralName)).Append("}}");
+                        SB.Append("{{Y|").Append(count.Things(limbName, limbPluralName)).Append("}}");
+
+                        if (GameObjectFactory.Factory.GetBlueprintIfExists(limb.DefaultBehavior) is GameObjectBlueprint defaultBehvaiour)
+                            GetDefaultBehaviorString(SB, defaultBehvaiour, true);
 
                         if (IsTrueKin
                             && limb.Category != BodyPartCategory.ANIMAL)
                             SB.AppendNoCybernetics();
                     }
+                    GetLongDescriptionExtras(SB, Summary);
                 }
 
                 return SB.ToString();
+            }
+            public void GetLongDescriptionOpening(StringBuilder SB, bool Summary = false)
+            {
+                if (!Summary)
+                    SB.Append("Includes the following body part slots:");
+                else
+                    SB.Append("Included parts:");
+            }
+            public void GetLongDescriptionExtras(StringBuilder SB, bool Summary = false)
+            {
+                if (Anatomy.HasRecipe())
+                {
+                    if (!Summary)
+                        SB.AppendColored("m", "There is a cooking recipe to get this body plan.")
+                            .AppendLine()
+                            ;
+                    else
+                        SB.AppendColored("m", "Avaialable via cooking");
+                    SB.AppendLine()
+                        ;
+                }
+
+                if (((AnatomyExclusion?.IsMechanical ?? false)
+                        || Anatomy?.Category == BodyPartCategory.MECHANICAL)
+                    && !Options.EnableBodyPlansThatAreRoboticWithoutMakingYouRobotic)
+                {
+                    if (!Summary)
+                        SB.AppendColored("c", "You will be made mechanical with this body plan.")
+                            .AppendLine()
+                            ;
+                    else
+                        SB.AppendColored("c", "You are mechanical");
+                    SB.AppendLine();
+                }
+
+                if (!Summary
+                    && AnatomyExclusion?.ExceptionMessage is string exceptionMessage
+                    && !exceptionMessage.IsNullOrEmpty())
+                    SB.Append(exceptionMessage)
+                        .AppendLine()
+                        ;
+
+                if (Summary
+                    && AnatomyExclusion?.ExceptionSummary is string exceptionSummary
+                    && !exceptionSummary.IsNullOrEmpty())
+                    SB.Append(exceptionSummary);
             }
 
             public static IEnumerable<AnatomyPart> GetAllParts(Anatomy Anatomy, AnatomyPart AnatomyPart)
@@ -356,36 +377,63 @@ namespace XRL.CharacterBuilds.Qud
 
                 if (indent > 0)
                     SB
-                        .Append(" ".ThisManyTimes(indent * 2));
+                        .Append(" ".ThisManyTimes(indent * 2))
+                        ;
 
                 SB
                     .AppendColored("K", "\x0007")
                     .Append(' ')
-                    .Append(BodyPart.GetCardinalDescription());
+                    .Append(BodyPart.GetCardinalDescription())
+                    ;
 
                 if (!BodyPart.Name.EqualsNoCase(BodyPart.Type))
                     SB
                         .Append(" (")
                         .Append(BodyPart.Type)
-                        .Append(")");
+                        .Append(")")
+                        ;
 
-                if (GameObjectFactory.Factory.GetBlueprintIfExists(BodyPart.DefaultBehaviorBlueprint) is GameObjectBlueprint defaultBehvaiour)
+                if (GameObjectFactory.Factory.GetBlueprintIfExists(BodyPart.VariantTypeModel().DefaultBehavior) is GameObjectBlueprint defaultBehvaiour)
                 {
                     HasNaturalEquipment = true;
-                    var sampleDefaultBehaviour = defaultBehvaiour.createSample();
-                    SB
-                        .Append(" - ")
-                        //.Append(" [")
-                        .AppendColored("w", sampleDefaultBehaviour.ShortDisplayNameStripped)
-                        //.Append("]")
-                        ;
-                    sampleDefaultBehaviour?.Obliterate();
+                    GetDefaultBehaviorString(SB, defaultBehvaiour);
                 }
 
                 if (IsTrueKin
                     && !BodyPart.CanReceiveCyberneticImplant())
                     SB.AppendNoCybernetics();
 
+                return SB;
+            }
+
+            public static StringBuilder GetDefaultBehaviorString(
+                StringBuilder SB,
+                GameObjectBlueprint defaultBehvaiour,
+                bool ExcludeName = false
+                )
+            {
+                var sampleDefaultBehaviour = defaultBehvaiour.createSample();
+
+                if (!ExcludeName)
+                    SB
+                        //.Append(" - ")
+                        .Append(' ')
+                        .AppendColored("w", sampleDefaultBehaviour.ShortDisplayNameStripped);
+
+                var mw = sampleDefaultBehaviour.GetPart<MeleeWeapon>();
+                string damage = !(mw?.IsImprovisedWeapon() ?? true) ? mw?.BaseDamage : null;
+
+                var armor = sampleDefaultBehaviour.GetPart<Armor>();
+                int aV = armor != null ? armor.AV : 0;
+                int dV = armor != null ? armor.DV : 0;
+
+                if (armor != null)
+                    SB.Append(' ').AppendArmor("y", aV, dV);
+
+                if (!damage.IsNullOrEmpty())
+                    SB.Append(' ').AppendDamage("y", damage);
+
+                sampleDefaultBehaviour?.Obliterate();
                 return SB;
             }
 
@@ -543,13 +591,16 @@ namespace XRL.CharacterBuilds.Qud
             AnatomyChoice anatomyChoice = SelectedChoice();
             anatomyChoice.GetRenderable();
             bool isTK = GenotypeModuleData?.Entry?.IsTrueKin ?? false;
-            string shortDesc = "{{C|::}}" + anatomyChoice.GetDescription() + "{{C|::}}";
-            string longDesc = isTK ? anatomyChoice.LongDescriptionTKSummary : anatomyChoice.LongDescriptionSummary;
+            string shortDesc = anatomyChoice.GetDescription();
+            string longDesc = isTK ? anatomyChoice.LongDescriptionNoOpenTKSummary : anatomyChoice.LongDescriptionNoOpenSummary;
             return new SummaryBlockData
             {
                 Id = GetType().FullName,
                 Title = "Body Plan",
-                Description = shortDesc + "\n" + longDesc,
+                Description = 
+                    "{{Y|" + shortDesc + ":}}" + 
+                    "\n" + 
+                    longDesc,
                 SortOrder = 50
             };
         }
@@ -674,7 +725,10 @@ namespace XRL.CharacterBuilds.Qud
         public void OrganizeAnatomyChoices(bool SelectDefaultChoice = false, bool OverrideSelection = false)
         {
             if (AnatomyChoices.IsNullOrEmpty())
+            {
                 MetricsManager.LogCallingModError(nameof(AnatomyChoices) + " empty when it probably shouldn't be.");
+                return;
+            }
 
             PlayerAnatomyChoice = null;
             if (PlayerAnatomyChoice != null
@@ -699,7 +753,8 @@ namespace XRL.CharacterBuilds.Qud
             ;
         public void PickAnatomy(int n)
         {
-            data ??= new Qud_UD_BodyPlanModuleData(PlayerAnatomyChoice);
+            if (data == null)
+                setData(DefaultData);
 
             if (AnatomyChoices.IsNullOrEmpty())
                 MetricsManager.LogCallingModError(nameof(AnatomyChoices) + " empty when it probably shouldn't be.");
@@ -710,13 +765,12 @@ namespace XRL.CharacterBuilds.Qud
         }
 
         private string GetPlayerBlueprint()
-        {
-            var body = GenotypeModuleData?.Entry?.BodyObject
-                .Coalesce(SubtypeModuleData?.Entry?.BodyObject)
-                .Coalesce("Humanoid");
-
-            return builder.info?.fireBootEvent(QudGameBootModule.BOOTEVENT_BOOTPLAYEROBJECTBLUEPRINT, The.Game, body);
-        }
+            => builder?.info?.fireBootEvent(
+                id: QudGameBootModule.BOOTEVENT_BOOTPLAYEROBJECTBLUEPRINT,
+                game: The.Game,
+                element: GenotypeModuleData?.Entry?.BodyObject
+                    .Coalesce(SubtypeModuleData?.Entry?.BodyObject)
+                    .Coalesce("Humanoid"));
 
         public string GetDefaultPlayerBodyPlan()
             => GameObjectFactory.Factory
