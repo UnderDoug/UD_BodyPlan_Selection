@@ -4,12 +4,16 @@ using ConsoleLib.Console;
 
 using UnityEngine;
 
+using XRL.Collections;
 using XRL.Rules;
 using XRL.UI;
 using XRL.UI.Framework;
 
 using ColorUtility = ConsoleLib.Console.ColorUtility;
-using XRL.Collections;
+
+using UD_BodyPlan_Selection.Mod;
+using Options = UD_BodyPlan_Selection.Mod.Options;
+using System.Linq;
 
 namespace XRL.CharacterBuilds.Qud.UI
 {
@@ -125,6 +129,7 @@ namespace XRL.CharacterBuilds.Qud.UI
             {
                 using var choicesToDelete = ScopeDisposedList<int>.GetFromPool();
                 bool isTK = module?.GenotypeModuleData?.Entry?.IsTrueKin ?? false;
+                var sB = World.Event.NewStringBuilder();
                 for (int i = 0; i < AnatomyChoices.Count; i++)
                 {
                     if (AnatomyChoices[i] is not Qud_UD_BodyPlanModule.AnatomyChoice choice)
@@ -134,9 +139,29 @@ namespace XRL.CharacterBuilds.Qud.UI
                     }
 
                     bool isSelected = module.IsSelected(choice);
-                    string description = choice.GetDescription(ShowDefault: true);
+
                     if (isSelected)
-                        description = "{{W|" + description + "}}";
+                        sB.AppendColored("W", choice.GetDescription(ShowDefault: true));
+                    else
+                        sB.Append(choice.GetDescription(ShowDefault: true));
+
+                    if (!choice.AnatomyExclusions.IsNullOrEmpty())
+                    {
+                        using var symbols = ScopeDisposedList<string>.GetFromPool();
+
+                        if (choice.AnatomyExclusions.IsTransformation())
+                            symbols.Add("{{m|\u00f1}}"); // ±
+
+                        if (choice.AnatomyExclusions.IsMechanical()
+                            && Options.EnableRoboticBodyPlansMakingYouRobotic)
+                            symbols.Add("{{c|\u000f}}"); // ☼
+
+                        if (choice.AnatomyExclusions.IsDifficult())
+                            symbols.Add("{{r|\u0013}}"); // ‼
+
+                        if (!symbols.IsNullOrEmpty())
+                            sB.Append($" {symbols.Aggregate("", (a, n) => a + n)}");
+                    }
 
                     string longDesc = isTK ? choice.LongDescriptionTK : choice.LongDescription;
 
@@ -154,13 +179,17 @@ namespace XRL.CharacterBuilds.Qud.UI
                         item: new PrefixMenuOption()
                         {
                             Prefix = isSelected ? CHECKED : EMPTY_CHECK,
-                            Description = description,
+                            Description = sB.ToString(),
                             LongDescription = longDesc,
                             Renderable = renderable
                         });
+
+                    sB.Clear();
                 }
                 foreach (int index in choicesToDelete)
                     AnatomyChoices.RemoveAt(index);
+
+                World.Event.ResetTo(sB);
             }
 
             // This method exists in two conditionally loaded partials:

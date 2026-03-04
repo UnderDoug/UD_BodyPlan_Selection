@@ -62,36 +62,22 @@
     <helptext>
       When enabled, body plans that are typically for robots will be available.
 
-      {{r|Be warned}}: selecting one of these body plans will make your character {{c|mechanical}}.
+      {{r|Be warned}}: by default, selecting one of these body plans will make your character {{c|mechanical}}.
 
       The default is {{w|Disabled}}.
     </helptext>
   </option>
   <option
-        ID="Option_UD_BodyPlan_Selection_EnableBodyPlansThatAreRoboticWithoutMakingYouRobotic"
+        ID="Option_UD_BodyPlan_Selection_EnableRoboticBodyPlansMakingYouRobotic"
 		    Requires="Option_UD_BodyPlan_Selection_EnableBodyPlansThatAreRobotic==Yes"
-        DisplayText="Enable body plans that are for robots without making you {{c|mechanical}}."
+        DisplayText="Enable body plans that are for robots making you {{c|mechanical}}."
         Category="Mod: Body Plan Selection"
         Type="Checkbox"
-        Default="No">
+        Default="Yes">
     <helptext>
-      When enabled, body plans that are for robots will not make you {{c|mechanical}}.
+      When enabled, body plans that are for robots will make you {{c|mechanical}}.
 
-      The default is {{w|Disabled}}.
-    </helptext>
-  </option>
-  <option
-        ID="Option_UD_BodyPlan_Selection_EnableBodyPlansThatSuck"
-        DisplayText="Enable body plans that are going to be very difficult to play with."
-        Category="Mod: Body Plan Selection"
-        Type="Checkbox"
-        Default="No">
-    <helptext>
-      When enabled, body plans that are lacking many of the integral components required to play properly will be available to select from.
-
-      {{r|Be warned}}: the game will substantially more difficult playing as one of these.
-
-      The default is {{w|Disabled}}.
+      The default is {{W|Enabled}}.
     </helptext>
   </option>
 </options>

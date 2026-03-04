@@ -114,49 +114,61 @@ namespace UD_BodyPlan_Selection.Mod
             {
                 if (_AnatomyExclusions.IsNullOrEmpty())
                     _AnatomyExclusions = GameObjectFactory.Factory?.GetBlueprintsInheritingFrom("UD_BodyPlan_Selection_BaseExclusion")
-                        .Select(bp => new AnatomyExclusion(bp))
+                        .SelectMany(bp => new AnatomyExclusion(bp).FromAnatomiesList())
                         .ToList();
 
                 return _AnatomyExclusions;
             }
         }
 
-        public static AnatomyExclusion GetAnatomyExclusion(string Anatomy)
-            => !Anatomy.IsNullOrEmpty()
-            ? AnatomyExclusions?.FirstOrDefault(e => !e.Anatomies.IsNullOrEmpty() && e.Anatomies.Contains(Anatomy))
-            : null
-            ;
-        public static AnatomyExclusion GetAnatomyExclusion(Anatomy Anatomy)
-        {
-            var exclusion = GetAnatomyExclusion(Anatomy?.Name);
+        public static IEnumerable<AnatomyExclusion> GetAnatomyExclusions(string Anatomy)
+            => AnatomyExclusions?.Where(e => !e.Anatomy.IsNullOrEmpty() && e.Anatomy == Anatomy);
 
-            if (exclusion == null
+        public static IEnumerable<AnatomyExclusion> GetAnatomyExclusions(Anatomy Anatomy)
+        {
+            if (Anatomy == null)
+                yield break;
+
+            bool anyMechanical = false;
+            foreach (AnatomyExclusion exclusion in GetAnatomyExclusions(Anatomy.Name))
+            {
+                anyMechanical = exclusion.IsMechanical
+                    || anyMechanical;
+                yield return exclusion;
+            }
+
+            if (!anyMechanical
                 && Anatomy.Category == BodyPartCategory.MECHANICAL)
             {
-                exclusion = new(Anatomy);
+                var exclusion = new AnatomyExclusion(Anatomy);
                 AnatomyExclusions.Add(exclusion);
+                yield return exclusion;
             }
-            return exclusion;
         }
-        public static AnatomyExclusion GetAnatomyExclusion(AnatomyChoice Choice)
-            => GetAnatomyExclusion(Choice?.Anatomy)
+        public static IEnumerable<AnatomyExclusion> GetAnatomyExclusions(AnatomyChoice Choice)
+            => GetAnatomyExclusions(Choice?.Anatomy)
             ;
 
-        public static bool TryGetAnatomyExclusion(string Anatomy, out AnatomyExclusion AnatomyExclusion)
-            => (AnatomyExclusion = GetAnatomyExclusion(Anatomy)) != null
+        public static bool TryGetAnatomyExclusions(string Anatomy, out IEnumerable<AnatomyExclusion> AnatomyExclusion)
+            => (AnatomyExclusion = GetAnatomyExclusions(Anatomy)).IsNullOrEmpty()
             ;
-        public static bool TryGetAnatomyExclusion(Anatomy Anatomy, out AnatomyExclusion AnatomyExclusion)
-            => TryGetAnatomyExclusion(Anatomy?.Name, out AnatomyExclusion)
+        public static bool TryGetAnatomyExclusions(Anatomy Anatomy, out IEnumerable<AnatomyExclusion> AnatomyExclusion)
+            => TryGetAnatomyExclusions(Anatomy?.Name, out AnatomyExclusion)
             ;
-        public static bool TryGetAnatomyExclusion(AnatomyChoice Choice, out AnatomyExclusion AnatomyExclusion)
-            => TryGetAnatomyExclusion(Choice?.Anatomy, out AnatomyExclusion)
+        public static bool TryGetAnatomyExclusionsFor(AnatomyChoice Choice, out IEnumerable<AnatomyExclusion> AnatomyExclusion)
+            => TryGetAnatomyExclusions(Choice?.Anatomy, out AnatomyExclusion)
             ;
 
         #endregion
         #region Pseudo-Debug
 
+        public static bool DisableDebug = true;
+
         public static void Log(string Message, int Indent = 0)
         {
+            if (DisableDebug)
+                return;
+
             if (Indent > 0)
                 Message = " ".ThisManyTimes(Indent * 4) + Message;
             UnityEngine.Debug.Log(Message);
@@ -177,6 +189,21 @@ namespace UD_BodyPlan_Selection.Mod
             ;
 
         #endregion
+
+        public static string NewlineAggregator<T>(string Accumulator, T Next)
+            => Accumulator + (!Accumulator.IsNullOrEmpty() ? '\n' : null) + Next;
+
+        public static StringBuilder AggregateNewline<T>(StringBuilder Accumulator, T Next)
+            => Accumulator
+                .Append(!Accumulator.IsNullOrEmpty() ? '\n' : null)
+                .Append(Next);
+
+        public static bool IsEqualDepthToRoot(BodyPart BodyPart)
+            => BodyPart.GetPartDepth() < 1;
+
+        public static bool IsNotEqualDepthToRoot(BodyPart BodyPart)
+            => !IsEqualDepthToRoot(BodyPart);
+
         #region Wishes
 
         public static string UD_BPS_Output => DataManager.SavePath("AnatomyTiles.xml");

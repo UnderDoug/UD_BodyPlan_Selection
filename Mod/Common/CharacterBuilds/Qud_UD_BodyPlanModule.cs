@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -12,6 +12,8 @@ using XRL.World.Parts;
 
 using UD_BodyPlan_Selection.Mod;
 using static UD_BodyPlan_Selection.Mod.AnatomyExclusion;
+using Event = XRL.World.Event;
+using XRL.Collections;
 
 namespace XRL.CharacterBuilds.Qud
 {
@@ -116,8 +118,8 @@ namespace XRL.CharacterBuilds.Qud
 
             public Anatomy Anatomy;
 
-            private AnatomyExclusion _AnatomyExclusion;
-            public AnatomyExclusion AnatomyExclusion => _AnatomyExclusion ??= Utils.GetAnatomyExclusion(this);
+            private List<AnatomyExclusion> _AnatomyExclusion;
+            public List<AnatomyExclusion> AnatomyExclusions => _AnatomyExclusion ??= new(Utils.GetAnatomyExclusions(this));
 
             public ChoiceRenderable Renderable;
 
@@ -222,11 +224,19 @@ namespace XRL.CharacterBuilds.Qud
                         GetLongDescriptionOpening(SB, Summary);
 
                     bool anyHasNatEquip = false;
+                    /*
                     foreach (BodyPart bodyPart in SampleCreature.Body.GetParts())
                     {
                         GetBodyPartString(SB, bodyPart, out bool hasNatEquip, IsTrueKin);
                         anyHasNatEquip = hasNatEquip || anyHasNatEquip;
                     }
+                    */
+                    SampleCreature.Body.GetLimbTree(
+                        SB: SB,
+                        IndentProc: s => "{{K|" + s + "}}",
+                        BodyPartProc: bp => GetBodyPartString(bp, IsTrueKin, true),
+                        Treat0DepthPartsAsRoot: true);
+                    anyHasNatEquip = SampleCreature.Body.GetFirstPart(bp => !bp.VariantTypeModel().DefaultBehavior.IsNullOrEmpty()) != null;
 
                     SB.AppendLine();
                     if (IsTrueKin)
@@ -238,13 +248,15 @@ namespace XRL.CharacterBuilds.Qud
                     if (anyHasNatEquip)
                         SB
                             .AppendLine()
-                            .AppendColored("w", "Indicates natural equipment")
+                            //.AppendColored("w", "Indicates natural equipment")
+                            .AppendColored("w", "Has natural equipment")
                             ;
 
                     SB.AppendLines(2);
                 }
                 else
                 {
+
                     if (IncludeOpening)
                         GetLongDescriptionOpening(SB, Summary);
 
@@ -264,21 +276,31 @@ namespace XRL.CharacterBuilds.Qud
                             SB.AppendLine();
 
                         string timesColored = "}}x {{Y|";
-                        string limbName = limb.FinalType.ToLower();
+                        string limbName = limb.FinalType ?? limb.Type;
                         string limbPluralName = null;
 
-                        if (limb.DescriptionPrefix?.ToLower() is string prefix)
+                        if (limb.DescriptionPrefix is string prefix)
                             limbName = $"{prefix} {limbName}";
+
+                        if (limb.Plural.GetValueOrDefault())
+                            limbPluralName = timesColored + limbName;
+
+                        if (limbName.EqualsNoCase("feet"))
+                            limbPluralName = timesColored + "Worn on Feet";
+
+                        if (limbName.EqualsNoCase("foot"))
+                            limbPluralName = timesColored + "Feet";
 
                         limbName = timesColored + limbName;
 
-                        if (limb.Plural.GetValueOrDefault())
-                            limbPluralName = limbName;
+                        SB.AppendColored("Y", count.Things(limbName, limbPluralName));
 
-                        if (limbName.EqualsNoCase("foot"))
-                            limbPluralName = timesColored + "feet";
-
-                        SB.Append("{{Y|").Append(count.Things(limbName, limbPluralName)).Append("}}");
+                        if (limb.FinalType.EqualsNoCase("body")
+                            && SampleCreature.Body.CalculateMobilitySpeedPenalty() is int moveSpeedPenalty
+                            && moveSpeedPenalty > 0)
+                            SB
+                                .Append(' ')
+                                .AppendColored("r", $"{-moveSpeedPenalty} MS");
 
                         if (GameObjectFactory.Factory.GetBlueprintIfExists(limb.DefaultBehavior) is GameObjectBlueprint defaultBehvaiour)
                             GetDefaultBehaviorString(SB, defaultBehvaiour, true);
@@ -301,6 +323,9 @@ namespace XRL.CharacterBuilds.Qud
             }
             public void GetLongDescriptionExtras(StringBuilder SB, bool Summary = false)
             {
+                if (Summary)
+                    SB.AppendLine();
+
                 if (Anatomy.HasRecipe())
                 {
                     if (!Summary)
@@ -309,13 +334,12 @@ namespace XRL.CharacterBuilds.Qud
                             ;
                     else
                         SB.AppendColored("m", "Avaialable via cooking");
-                    SB.AppendLine()
-                        ;
+                    SB.AppendLine();
                 }
 
-                if (((AnatomyExclusion?.IsMechanical ?? false)
+                if (((AnatomyExclusions?.IsMechanical() ?? false)
                         || Anatomy?.Category == BodyPartCategory.MECHANICAL)
-                    && !Options.EnableBodyPlansThatAreRoboticWithoutMakingYouRobotic)
+                    && Options.EnableRoboticBodyPlansMakingYouRobotic)
                 {
                     if (!Summary)
                         SB.AppendColored("c", "You will be made mechanical with this body plan.")
@@ -327,76 +351,62 @@ namespace XRL.CharacterBuilds.Qud
                 }
 
                 if (!Summary
-                    && AnatomyExclusion?.ExceptionMessage is string exceptionMessage
-                    && !exceptionMessage.IsNullOrEmpty())
+                    && (AnatomyExclusions?.HasExceptionMessage() ?? false))
+                    foreach (string exceptionMessage in AnatomyExclusions.ExceptionMessages())
                     SB.Append(exceptionMessage)
+                        .AppendLine()
                         .AppendLine()
                         ;
 
                 if (Summary
-                    && AnatomyExclusion?.ExceptionSummary is string exceptionSummary
-                    && !exceptionSummary.IsNullOrEmpty())
-                    SB.Append(exceptionSummary);
-            }
-
-            public static IEnumerable<AnatomyPart> GetAllParts(Anatomy Anatomy, AnatomyPart AnatomyPart)
-            {
-                // Doesn't seem to grab all the parts this anatomy has.
-                if (Anatomy == null
-                    && AnatomyPart == null)
-                    yield break;
-
-                if (Anatomy != null)
-                    foreach (AnatomyPart anatomyPart in Anatomy.Parts)
-                        foreach (AnatomyPart subpart in GetAllParts(null, anatomyPart))
-                            yield return subpart;
-
-                if (AnatomyPart != null)
-                {
-                    yield return AnatomyPart;
-                    if (AnatomyPart.Subparts != null)
-                        foreach (AnatomyPart anatomyPart in AnatomyPart.Subparts)
-                            foreach (AnatomyPart subpart in GetAllParts(null, anatomyPart))
-                                yield return subpart;
-                }
+                    && (AnatomyExclusions?.HasExceptionSummary() ?? false))
+                    foreach (string exceptionSummary in AnatomyExclusions.ExceptionSummaries())
+                        SB.Append(exceptionSummary)
+                        .AppendLine()
+                        ;
             }
 
             public static StringBuilder GetBodyPartString(
                 StringBuilder SB,
                 BodyPart BodyPart,
                 out bool HasNaturalEquipment,
-                bool IsTrueKin = false
+                bool IsTrueKin = false,
+                bool ExcludeDefaultBehaviorName = false
                 )
             {
-                HasNaturalEquipment = false;
+                string defaultBehaviour = BodyPart.VariantTypeModel().DefaultBehavior;
+                HasNaturalEquipment = !defaultBehaviour.IsNullOrEmpty();
+
+                string description = BodyPart.GetCardinalDescription();
 
                 if (!SB.IsNullOrEmpty())
                     SB.AppendLine();
 
-                int indent = (BodyPart?.ParentBody?.GetPartDepth(BodyPart)).GetValueOrDefault();
+                if (HasNaturalEquipment
+                    && ExcludeDefaultBehaviorName)
+                    SB.AppendColored("w", BodyPart.GetCardinalDescription());
+                else
+                    SB.Append(BodyPart.GetCardinalDescription());
 
-                if (indent > 0)
-                    SB
-                        .Append(" ".ThisManyTimes(indent * 2))
-                        ;
-
-                SB
-                    .AppendColored("K", "\x0007")
-                    .Append(' ')
-                    .Append(BodyPart.GetCardinalDescription())
-                    ;
-
-                if (!BodyPart.Name.EqualsNoCase(BodyPart.Type))
+                if (BodyPart.IsVariantType()
+                    && !description.ContainsNoCase(BodyPart.Type))
                     SB
                         .Append(" (")
-                        .Append(BodyPart.Type)
+                        .Append(BodyPart.TypeModel().FinalType)
                         .Append(")")
                         ;
+
+                if (BodyPart.VariantTypeModel().FinalType.EqualsNoCase("body")
+                    && BodyPart.ParentBody.CalculateMobilitySpeedPenalty() is int moveSpeedPenalty
+                    && moveSpeedPenalty > 0)
+                    SB
+                        .Append(' ')
+                        .AppendColored("r", $"{-moveSpeedPenalty} Move Speed Penalty");
 
                 if (GameObjectFactory.Factory.GetBlueprintIfExists(BodyPart.VariantTypeModel().DefaultBehavior) is GameObjectBlueprint defaultBehvaiour)
                 {
                     HasNaturalEquipment = true;
-                    GetDefaultBehaviorString(SB, defaultBehvaiour);
+                    GetDefaultBehaviorString(SB, defaultBehvaiour, ExcludeDefaultBehaviorName);
                 }
 
                 if (IsTrueKin
@@ -405,6 +415,18 @@ namespace XRL.CharacterBuilds.Qud
 
                 return SB;
             }
+            public static string GetBodyPartString(
+                BodyPart BodyPart,
+                bool IsTrueKin = false,
+                bool ExcludeDefaultBehaviorName = false
+                )
+                => Event.FinalizeString(
+                    SB: GetBodyPartString(
+                        SB: Event.NewStringBuilder(),
+                        BodyPart: BodyPart,
+                        HasNaturalEquipment: out _,
+                        IsTrueKin: IsTrueKin,
+                        ExcludeDefaultBehaviorName: ExcludeDefaultBehaviorName));
 
             public static StringBuilder GetDefaultBehaviorString(
                 StringBuilder SB,
@@ -421,7 +443,12 @@ namespace XRL.CharacterBuilds.Qud
                         .AppendColored("w", sampleDefaultBehaviour.ShortDisplayNameStripped);
 
                 var mw = sampleDefaultBehaviour.GetPart<MeleeWeapon>();
-                string damage = !(mw?.IsImprovisedWeapon() ?? true) ? mw?.BaseDamage : null;
+                bool mwNotImprovisedAndNull = !(mw?.IsImprovisedWeapon() ?? true);
+                string damage = mwNotImprovisedAndNull ? mw?.BaseDamage : null;
+
+                int pVCap = mwNotImprovisedAndNull ? mw?.MaxStrengthBonus ?? 0 : 0;
+                int pV = mwNotImprovisedAndNull ? 4 : 0;
+                string pVSymbolColor = GetDisplayNamePenetrationColorEvent.GetFor(sampleDefaultBehaviour);
 
                 var armor = sampleDefaultBehaviour.GetPart<Armor>();
                 int aV = armor != null ? armor.AV : 0;
@@ -429,6 +456,10 @@ namespace XRL.CharacterBuilds.Qud
 
                 if (armor != null)
                     SB.Append(' ').AppendArmor("y", aV, dV);
+
+                if (pV > 0
+                    && pVCap > 0)
+                    SB.Append(' ').AppendPV(pVSymbolColor, "y", pV, pVCap);
 
                 if (!damage.IsNullOrEmpty())
                     SB.Append(' ').AppendDamage("y", damage);
@@ -444,7 +475,7 @@ namespace XRL.CharacterBuilds.Qud
                 {
                     string safeAnatomyName = Anatomy.Name.Replace("-", "_").Replace(" ", "_");
                     string tileKey = ChoiceRenderable.xTagPrefix + safeAnatomyName;
-                    if (AnatomyExclusion?.Transformation is TransformationData xForm
+                    if (AnatomyExclusions?.FirstTransformationOrDefault() is TransformationData xForm
                         && !xForm.Tile.IsNullOrEmpty()
                         && !xForm.DetailColor.IsNullOrEmpty())
                         Renderable = new(xForm, true);
@@ -588,19 +619,40 @@ namespace XRL.CharacterBuilds.Qud
 
         public override SummaryBlockData GetSummaryBlock()
         {
-            AnatomyChoice anatomyChoice = SelectedChoice();
-            anatomyChoice.GetRenderable();
-            bool isTK = GenotypeModuleData?.Entry?.IsTrueKin ?? false;
-            string shortDesc = anatomyChoice.GetDescription();
-            string longDesc = isTK ? anatomyChoice.LongDescriptionNoOpenTKSummary : anatomyChoice.LongDescriptionNoOpenSummary;
-            return new SummaryBlockData
+            var choice = SelectedChoice();
+            var sB = Event.NewStringBuilder()
+                .Append("{{Y|")
+                .Append(choice.GetDescription());
+
+            if (!choice.AnatomyExclusions.IsNullOrEmpty())
+            {
+                using var symbols = ScopeDisposedList<string>.GetFromPool();
+
+                if (choice.AnatomyExclusions.IsTransformation())
+                    symbols.Add("{{m|\u00f1}}"); // ±
+
+                if (choice.AnatomyExclusions.IsMechanical()
+                    && Options.EnableRoboticBodyPlansMakingYouRobotic)
+                    symbols.Add("{{c|\u000f}}"); // ☼
+
+                if (choice.AnatomyExclusions.IsDifficult())
+                    symbols.Add("{{r|\u0013}}"); // ‼
+
+                if (!symbols.IsNullOrEmpty())
+                    sB.Append($" {symbols.Aggregate("", (a, n) => a + n)}");
+            }
+            sB.Append(":}}")
+                .AppendLine()
+                .Append(
+                    GenotypeModuleData?.Entry?.IsTrueKin ?? false 
+                    ? choice.LongDescriptionNoOpenTKSummary 
+                    : choice.LongDescriptionNoOpenSummary
+                    );
+            return new()
             {
                 Id = GetType().FullName,
                 Title = "Body Plan",
-                Description = 
-                    "{{Y|" + shortDesc + ":}}" + 
-                    "\n" + 
-                    longDesc,
+                Description = Event.FinalizeString(sB),
                 SortOrder = 50
             };
         }
@@ -660,7 +712,7 @@ namespace XRL.CharacterBuilds.Qud
                     }
 
                     if (Anatomies.GetAnatomy(anatomy).Category == BodyPartCategory.MECHANICAL
-                        && !Options.EnableBodyPlansThatAreRoboticWithoutMakingYouRobotic)
+                        && Options.EnableRoboticBodyPlansMakingYouRobotic)
                         World.ObjectBuilders.Roboticized.Roboticize(player);
                 }
             }
@@ -719,8 +771,8 @@ namespace XRL.CharacterBuilds.Qud
         public static bool AnatomyChoiceIsValid(AnatomyChoice Choice)
             => Choice.GetDescription() != AnatomyChoice.MISSING_ANATOMY
             && Choice.Anatomy != null
-            && (Choice.AnatomyExclusion == null
-                || !Choice.AnatomyExclusion.IsExcluded())
+            && (Choice.AnatomyExclusions == null
+                || !Choice.AnatomyExclusions.IsExcluded())
             ;
         public void OrganizeAnatomyChoices(bool SelectDefaultChoice = false, bool OverrideSelection = false)
         {
@@ -745,7 +797,7 @@ namespace XRL.CharacterBuilds.Qud
 
         public static bool IsEligibleAnatomy(Anatomy Anatomy)
             => Anatomy != null
-            && (Utils.GetAnatomyExclusion(Anatomy) is not AnatomyExclusion anatomyExclusion
+            && (Utils.GetAnatomyExclusions(Anatomy) is not AnatomyExclusion anatomyExclusion
                 || anatomyExclusion.IsOptional)
             ;
         public static AnatomyChoice AnatomyToChoice(Anatomy Anatomy)

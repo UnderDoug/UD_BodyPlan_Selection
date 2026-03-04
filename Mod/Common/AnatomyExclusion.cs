@@ -1,11 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using System.Text;
 
 using XRL;
 using XRL.World;
 using XRL.World.Anatomy;
+
+using static UD_BodyPlan_Selection.Mod.AnatomyExclusion;
 
 namespace UD_BodyPlan_Selection.Mod
 {
@@ -68,9 +71,9 @@ namespace UD_BodyPlan_Selection.Mod
             }
         }
         
-        public IReadOnlyList<string> Anatomies;
+        private IReadOnlyList<string> Anatomies;
 
-        public string Anatomy => Anatomies?[0];
+        public string Anatomy;
 
         public bool IsDifficult;
 
@@ -90,6 +93,7 @@ namespace UD_BodyPlan_Selection.Mod
         public AnatomyExclusion()
         {
             Anatomies = null;
+            Anatomy = null;
             IsDifficult = false;
             IsMechanical = false;
             Transformation = null;
@@ -100,6 +104,7 @@ namespace UD_BodyPlan_Selection.Mod
         }
         public AnatomyExclusion(
             IReadOnlyList<string> Anatomies,
+            string Anatomy,
             bool IsDifficult,
             bool IsMechanical,
             TransformationData Transformation,
@@ -111,6 +116,7 @@ namespace UD_BodyPlan_Selection.Mod
             : this()
         {
             this.Anatomies = Anatomies;
+            this.Anatomy = Anatomy;
             this.IsDifficult = IsDifficult;
             this.IsMechanical = IsMechanical;
             this.Transformation = Transformation;
@@ -118,6 +124,20 @@ namespace UD_BodyPlan_Selection.Mod
             this.ExemptThisExclusion = ExemptThisExclusion;
             this.ExceptionMessage = ExceptionMessage;
             this.ExceptionSummary = ExceptionSummary;
+
+            if (Anatomies.IsNullOrEmpty())
+            {
+                Utils.Log($"{typeof(AnatomyExclusion).CallChain(".ctor")}()");
+                Utils.Log($"{nameof(Anatomy)}: {Anatomy}", Indent: 1);
+                Utils.Log($"{nameof(IsDifficult)}: {IsDifficult}", Indent: 1);
+                Utils.Log($"{nameof(IsMechanical)}: {IsMechanical}", Indent: 1);
+                Utils.Log($"{nameof(IsTransformation)}: {IsTransformation}", Indent: 1);
+                if (IsTransformation)
+                    Transformation.DebugOutput(2);
+                Utils.Log($"{nameof(IsOptional)}: {IsOptional}", Indent: 1);
+                Utils.Log($"{nameof(ExceptionMessage)}: {ExceptionMessage}", Indent: 1);
+                Utils.Log($"{nameof(ExceptionSummary)}: {ExceptionSummary}", Indent: 1);
+            }
         }
         public AnatomyExclusion(GameObjectBlueprint DataBucket)
             : this()
@@ -153,6 +173,8 @@ namespace UD_BodyPlan_Selection.Mod
                 Transformation = new(transformationData);
             }
 
+            Anatomy = Anatomies?[0];
+
             IsDifficult = DataBucket.HasTag("Difficult")
                 || DataBucket.HasTag("Sucks");
 
@@ -187,8 +209,12 @@ namespace UD_BodyPlan_Selection.Mod
                 if (!optionID.IsNullOrEmpty())
                 {
                     Utils.Log($"{nameof(optionID)}: {optionID}", Indent: 2);
-                    ExemptThisExclusion = ()
-                        => XRL.UI.Options.GetOptionBool(optionID);
+                    if (optionID.EqualsNoCase("AlwaysEnabled"))
+                        ExemptThisExclusion = ()
+                            => true;
+                    else
+                        ExemptThisExclusion = ()
+                            => XRL.UI.Options.GetOptionBool(optionID);
                 }
                 else
                 if (IsTransformation)
@@ -199,9 +225,9 @@ namespace UD_BodyPlan_Selection.Mod
                 }
                 else
                 {
-                    Utils.Log($"{nameof(optionID)}: {nameof(Options.EnableBodyPlansThatSuck)}", Indent: 2);
+                    Utils.Log($"{nameof(optionID)}: true (no option)", Indent: 2);
                     ExemptThisExclusion = ()
-                        => Options.EnableBodyPlansThatSuck;
+                        => true;
                 }
             }
             else
@@ -212,6 +238,20 @@ namespace UD_BodyPlan_Selection.Mod
 
             Utils.Log($"{nameof(ExceptionMessage)}: {ExceptionMessage}", Indent: 1);
             Utils.Log($"{nameof(ExceptionSummary)}: {ExceptionSummary}", Indent: 1);
+        }
+        public AnatomyExclusion(string Anatomy, AnatomyExclusion Source)
+            : this(
+                    Anatomies: null,
+                    Anatomy: Anatomy,
+                    IsDifficult: Source.IsDifficult,
+                    IsMechanical: Source.IsMechanical,
+                    Transformation: Source.Transformation,
+                    IsOptional: Source.IsOptional,
+                    ExemptThisExclusion: Source.ExemptThisExclusion,
+                    ExceptionMessage: Source.ExceptionMessage,
+                    ExceptionSummary: Source.ExceptionSummary
+                  )
+        {
         }
         public AnatomyExclusion(Anatomy Anatomy)
         {
@@ -225,12 +265,60 @@ namespace UD_BodyPlan_Selection.Mod
                         => Options.EnableBodyPlansThatAreRobotic;
                 else
                     ExemptThisExclusion = ()
-                        => Options.EnableBodyPlansThatSuck;
+                        => true;
             }
         }
+
+        public IEnumerable<AnatomyExclusion> FromAnatomiesList()
+            => Anatomies.Select(a => new AnatomyExclusion(a, this));
 
         public bool IsExcluded()
             => !IsOptional
             || !(ExemptThisExclusion?.Invoke() ?? true);
+    }
+
+    public static class AnatomyExclusionExtensions
+    {
+        public static bool IsExcluded(this IEnumerable<AnatomyExclusion> AnatomyExclusions)
+            => AnatomyExclusions.Any(e => e.IsExcluded())
+            ;
+        public static bool Include(this IEnumerable<AnatomyExclusion> AnatomyExclusions)
+            => AnatomyExclusions == null
+            || !AnatomyExclusions.IsExcluded()
+            ;
+        public static bool IsMechanical(this IEnumerable<AnatomyExclusion> AnatomyExclusions)
+            => AnatomyExclusions.Any(e => e.IsMechanical)
+            ;
+        public static bool IsTransformation(this IEnumerable<AnatomyExclusion> AnatomyExclusions)
+            => AnatomyExclusions.Any(e => e.IsTransformation)
+            ;
+        public static bool IsDifficult(this IEnumerable<AnatomyExclusion> AnatomyExclusions)
+            => AnatomyExclusions.Any(e => e.IsDifficult)
+            ;
+        public static bool IsOptional(this IEnumerable<AnatomyExclusion> AnatomyExclusions)
+            => AnatomyExclusions.Any(e => e.IsOptional)
+            ;
+
+        public static TransformationData FirstTransformationOrDefault(this IEnumerable<AnatomyExclusion> AnatomyExclusions)
+            => AnatomyExclusions?.FirstOrDefault(e => e.IsTransformation)?.Transformation
+            ;
+
+        public static bool HasExceptionMessage(this IEnumerable<AnatomyExclusion> AnatomyExclusions)
+            => AnatomyExclusions.Any(e => !e.ExceptionMessage.IsNullOrEmpty())
+            ;
+        public static IEnumerable<string> ExceptionMessages(this IEnumerable<AnatomyExclusion> AnatomyExclusions)
+            => AnatomyExclusions
+                .Where(e => !e.ExceptionMessage.IsNullOrEmpty())
+                .Select(e => e.ExceptionMessage)
+            ;
+
+        public static bool HasExceptionSummary(this IEnumerable<AnatomyExclusion> AnatomyExclusions)
+            => AnatomyExclusions.Any(e => !e.ExceptionSummary.IsNullOrEmpty())
+            ;
+        public static IEnumerable<string> ExceptionSummaries(this IEnumerable<AnatomyExclusion> AnatomyExclusions)
+            => AnatomyExclusions
+                .Where(e => !e.ExceptionSummary.IsNullOrEmpty())
+                .Select(e => e.ExceptionSummary)
+            ;
     }
 }

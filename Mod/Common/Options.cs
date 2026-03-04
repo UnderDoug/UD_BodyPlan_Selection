@@ -14,8 +14,6 @@ namespace UD_BodyPlan_Selection.Mod
         public static bool EnableBodyPlansAvailableViaRecipe;
 
         public static bool EnableBodyPlansThatAreRobotic;
-        public static bool EnableBodyPlansThatAreRoboticWithoutMakingYouRobotic;
-
-        public static bool EnableBodyPlansThatSuck;
+        public static bool EnableRoboticBodyPlansMakingYouRobotic;
     }
 }
