@@ -2,7 +2,7 @@
 
 using XRL.World.Anatomy;
 
-using static UD_BodyPlan_Selection.Mod.AnatomyExclusion;
+using static UD_BodyPlan_Selection.Mod.AnatomyConfiguration;
 
 namespace XRL.CharacterBuilds.Qud
 {
@@ -27,7 +27,7 @@ namespace XRL.CharacterBuilds.Qud
         { }
 
         public Qud_UD_BodyPlanModuleData(Qud_UD_BodyPlanModule.AnatomyChoice Selection)
-            : this(Selection?.Anatomy, Selection?.AnatomyExclusions?.FirstTransformationOrDefault())
+            : this(Selection?.Anatomy, Selection?.AnatomyConfigurations?.FirstTransformationOrDefault())
         { }
     }
 }

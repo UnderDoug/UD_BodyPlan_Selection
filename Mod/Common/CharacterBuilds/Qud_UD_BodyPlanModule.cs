@@ -11,7 +11,7 @@ using XRL.World.Anatomy;
 using XRL.World.Parts;
 
 using UD_BodyPlan_Selection.Mod;
-using static UD_BodyPlan_Selection.Mod.AnatomyExclusion;
+using static UD_BodyPlan_Selection.Mod.AnatomyConfiguration;
 using Event = XRL.World.Event;
 using XRL.Collections;
 
@@ -138,8 +138,8 @@ namespace XRL.CharacterBuilds.Qud
 
             public Anatomy Anatomy;
 
-            private List<AnatomyExclusion> _AnatomyExclusion;
-            public List<AnatomyExclusion> AnatomyExclusions => _AnatomyExclusion ??= new(Utils.GetAnatomyExclusions(this));
+            private List<AnatomyConfiguration> _AnatomyConfigurations;
+            public List<AnatomyConfiguration> AnatomyConfigurations => _AnatomyConfigurations ??= new(Utils.GetAnatomyConfigurations(this));
 
             public ChoiceRenderable Renderable;
 
@@ -172,7 +172,7 @@ namespace XRL.CharacterBuilds.Qud
             public AnatomyChoice()
             {
                 Anatomy = null;
-                _AnatomyExclusion = null;
+                _AnatomyConfigurations = null;
                 Renderable = null;
                 IsDefault = false;
 
@@ -202,7 +202,7 @@ namespace XRL.CharacterBuilds.Qud
             }
 
             public override string ToString()
-                => GetDescription(true) + (Renderable?.Tile is string tile ? " " + tile : null);
+                => $"{GetDescription(ShowDefault: true, ShowSymbols: true)}{(Renderable?.Tile is string tile ? " " + tile : null)}";
 
             public void ClearLongDescriptionCaches()
             {
@@ -212,13 +212,24 @@ namespace XRL.CharacterBuilds.Qud
                 _LongDescriptionTKSummary = null;
             }
 
-            public string GetDescription(bool ShowDefault = false)
+            public string GetDescription(bool ShowDefault = false, bool ShowSymbols = false)
             {
                 SB.Clear();
 
                 SB.Append(Anatomy?.Name.SplitCamelCase() ?? MISSING_ANATOMY);
-                if (IsDefault && ShowDefault)
-                    SB.Append(" (default)");
+
+                if (SB.ToString() != MISSING_ANATOMY)
+                {
+                    if (ShowDefault
+                        && IsDefault)
+                        SB.Append(" (default)");
+
+                    if (ShowSymbols
+
+                        && !AnatomyConfigurations.IsNullOrEmpty()
+                        && AnatomyConfigurations.HasSymbols())
+                        SB.Append($" {AnatomyConfigurations.Symbols().Aggregate("", (a, n) => a + n)}");
+                }
 
                 return SB.ToString();
             }
@@ -244,13 +255,7 @@ namespace XRL.CharacterBuilds.Qud
                         GetLongDescriptionOpening(SB, Summary);
 
                     bool anyHasNatEquip = false;
-                    /*
-                    foreach (BodyPart bodyPart in SampleCreature.Body.GetParts())
-                    {
-                        GetBodyPartString(SB, bodyPart, out bool hasNatEquip, IsTrueKin);
-                        anyHasNatEquip = hasNatEquip || anyHasNatEquip;
-                    }
-                    */
+
                     SampleCreature.Body.GetLimbTree(
                         SB: SB,
                         IndentProc: s => "{{K|" + s + "}}",
@@ -357,7 +362,7 @@ namespace XRL.CharacterBuilds.Qud
                     SB.AppendLine();
                 }
 
-                if (((AnatomyExclusions?.IsMechanical() ?? false)
+                if (((AnatomyConfigurations?.IsMechanical() ?? false)
                         || Anatomy?.Category == BodyPartCategory.MECHANICAL)
                     && Options.EnableRoboticBodyPlansMakingYouRobotic)
                 {
@@ -371,16 +376,16 @@ namespace XRL.CharacterBuilds.Qud
                 }
 
                 if (!Summary
-                    && (AnatomyExclusions?.HasExceptionMessage() ?? false))
-                    foreach (string exceptionMessage in AnatomyExclusions.ExceptionMessages())
+                    && (AnatomyConfigurations?.HasDescriptionAddition() ?? false))
+                    foreach (string exceptionMessage in AnatomyConfigurations.DescriptionAdditions())
                     SB.Append(exceptionMessage)
                         .AppendLine()
                         .AppendLine()
                         ;
 
                 if (Summary
-                    && (AnatomyExclusions?.HasExceptionSummary() ?? false))
-                    foreach (string exceptionSummary in AnatomyExclusions.ExceptionSummaries())
+                    && (AnatomyConfigurations?.HasSummaryAddition() ?? false))
+                    foreach (string exceptionSummary in AnatomyConfigurations.SummaryAdditions())
                         SB.Append(exceptionSummary)
                         .AppendLine()
                         ;
@@ -495,7 +500,7 @@ namespace XRL.CharacterBuilds.Qud
                 {
                     string safeAnatomyName = Anatomy.Name.Replace("-", "_").Replace(" ", "_");
                     string tileKey = ChoiceRenderable.xTagPrefix + safeAnatomyName;
-                    if (AnatomyExclusions?.FirstTransformationOrDefault() is TransformationData xForm
+                    if (AnatomyConfigurations?.FirstTransformationOrDefault() is TransformationData xForm
                         && !xForm.Tile.IsNullOrEmpty()
                         && !xForm.DetailColor.IsNullOrEmpty())
                         Renderable = new(xForm, true);
@@ -640,39 +645,16 @@ namespace XRL.CharacterBuilds.Qud
         public override SummaryBlockData GetSummaryBlock()
         {
             var choice = SelectedChoice();
-            var sB = Event.NewStringBuilder()
-                .Append("{{Y|")
-                .Append(choice.GetDescription());
-
-            if (!choice.AnatomyExclusions.IsNullOrEmpty())
-            {
-                using var symbols = ScopeDisposedList<string>.GetFromPool();
-
-                if (choice.AnatomyExclusions.IsTransformation())
-                    symbols.Add("{{m|\u00f1}}"); // ±
-
-                if (choice.AnatomyExclusions.IsMechanical()
-                    && Options.EnableRoboticBodyPlansMakingYouRobotic)
-                    symbols.Add("{{c|\u000f}}"); // ☼
-
-                if (choice.AnatomyExclusions.IsDifficult())
-                    symbols.Add("{{r|\u0013}}"); // ‼
-
-                if (!symbols.IsNullOrEmpty())
-                    sB.Append($" {symbols.Aggregate("", (a, n) => a + n)}");
-            }
-            sB.Append(":}}")
-                .AppendLine()
-                .Append(
-                    GenotypeModuleData?.Entry?.IsTrueKin ?? false 
-                    ? choice.LongDescriptionNoOpenTKSummary 
-                    : choice.LongDescriptionNoOpenSummary
-                    );
             return new()
             {
                 Id = GetType().FullName,
                 Title = "Body Plan",
-                Description = Event.FinalizeString(sB),
+                Description = Event.FinalizeString(
+                    SB: Event.NewStringBuilder()
+                        .Append("{{Y|").Append(choice.GetDescription()).Append(":}}").AppendLine()
+                        .Append(GenotypeModuleData?.Entry?.IsTrueKin ?? false
+                            ? choice.LongDescriptionNoOpenTKSummary
+                            : choice.LongDescriptionNoOpenSummary)),
                 SortOrder = 50
             };
         }
@@ -791,8 +773,7 @@ namespace XRL.CharacterBuilds.Qud
         public static bool AnatomyChoiceIsValid(AnatomyChoice Choice)
             => Choice.GetDescription() != AnatomyChoice.MISSING_ANATOMY
             && Choice.Anatomy != null
-            && (Choice.AnatomyExclusions == null
-                || !Choice.AnatomyExclusions.IsExcluded())
+            && (Choice?.AnatomyConfigurations?.AllowSelection() ?? true)
             ;
         public void OrganizeAnatomyChoices(bool SelectDefaultChoice = false, bool OverrideSelection = false)
         {
@@ -817,7 +798,7 @@ namespace XRL.CharacterBuilds.Qud
 
         public static bool IsEligibleAnatomy(Anatomy Anatomy)
             => Anatomy != null
-            && (Utils.GetAnatomyExclusions(Anatomy) is not AnatomyExclusion anatomyExclusion
+            && (Utils.GetAnatomyConfigurations(Anatomy) is not AnatomyConfiguration anatomyExclusion
                 || anatomyExclusion.IsOptional)
             ;
         public static AnatomyChoice AnatomyToChoice(Anatomy Anatomy)

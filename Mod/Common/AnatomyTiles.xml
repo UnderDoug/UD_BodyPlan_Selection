@@ -152,7 +152,7 @@
     <!--xtagUD_BDS_Flower Blueprint="Asphodel" Tile="Creatures/sw_flower.bmp" RenderString="237" ColorString="&amp;M" TileColor="&amp;G" DetailColor="M" /-->
 
     <!--xtagUD_BDS_Frog Blueprint="Ice frog" Tile="Creatures/sw_frog.bmp" RenderString="f" ColorString="&amp;C" DetailColor="W" /-->
-    <xtagUD_BDS_Frog Blueprint="Bloated Pearlfrog" Tile="Creatures/sw_giant_frog.bmp" RenderString="F" ColorString="&amp;Y" DetailColor="g" />
+    <xtagUD_BDS_Frog Blueprint="Bloated Pearlfrog_Override" Tile="Creatures/sw_giant_frog.bmp" RenderString="F" ColorString="&amp;Y" DetailColor="g" />
 
     <xtagUD_BDS_Fungus Blueprint="FungusPuffer" Tile="Creatures/sw_mushroom.bmp" RenderString="231" ColorString="&amp;C" DetailColor="M" />
     <!--xtagUD_BDS_Fungus Blueprint="FungusPuffer1" Tile="Creatures/sw_mushroom.bmp" RenderString="231" ColorString="&amp;W" DetailColor="M" /-->

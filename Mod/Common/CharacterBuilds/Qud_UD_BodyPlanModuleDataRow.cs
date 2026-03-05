@@ -2,7 +2,7 @@
 
 using UD_BodyPlan_Selection.Mod;
 
-using static UD_BodyPlan_Selection.Mod.AnatomyExclusion;
+using static UD_BodyPlan_Selection.Mod.AnatomyConfiguration;
 
 namespace XRL.CharacterBuilds.Qud
 {
@@ -11,6 +11,7 @@ namespace XRL.CharacterBuilds.Qud
     {
         public string Anatomy;
         public TransformationData Transformation;
+
         public Qud_UD_BodyPlanModuleDataRow()
         {
             Anatomy = null;
@@ -23,7 +24,7 @@ namespace XRL.CharacterBuilds.Qud
             this.Transformation = Transformation;
         }
         public Qud_UD_BodyPlanModuleDataRow(Qud_UD_BodyPlanModule.AnatomyChoice Choice)
-            : this(Choice?.Anatomy?.Name, Choice?.AnatomyExclusions?.FirstTransformationOrDefault())
+            : this(Choice?.Anatomy?.Name, Choice?.AnatomyConfigurations?.FirstTransformationOrDefault())
         { }
     }
 }

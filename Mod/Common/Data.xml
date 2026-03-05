@@ -1,7 +1,8 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
 <objects>
   
-  <object Name="UD_BodyPlan_Selection_BaseExclusion" Inherits="DataBucket">
+  <object Name="UD_BodyPlan_Selection_BaseConfiguration" Inherits="DataBucket"
+          PreviousName="UD_BodyPlan_Selection_BaseExclusion" >
     <tag Name="BaseObject" Value="*noinherit" />
   </object>
 
@@ -16,23 +17,29 @@
       Property="PropertySetWhenRecipeConsumed"
       Mutations="List,OfMutations,WhenTransformed" />
     <tag Name="Optional" Value="true" />
-    <tag Name="ExceptionMessage" Value="Message to display in Long Description if optionally exempt from exclusion." />
-    <tag Name="ExceptionSummary" Value="Message to display in Summary Block if optionally exempt from exclusion." />
+    <tag Name="DescriptionAddition" Value="Message to display in Long Description if optionally exempt from exclusion." />
+    <tag Name="SummaryAddition" Value="Message to display in Summary Block if optionally exempt from exclusion." />
+    <tag Name="Symbols" Value="B::&#013;" />
   </object-->
 
-  <object Name="UD_BodyPlan_Selection_NotOptional" Inherits="UD_BodyPlan_Selection_BaseExclusion">
+  <object Name="UD_BodyPlan_Selection_Sucks" Inherits="UD_BodyPlan_Selection_BaseConfiguration">
+    <tag Name="Anatomies" Value="BipedalRobot,Clam,Echinoid,Mirror,Motes,Nest,Slug,Snail,Snake,Turret,Worm" />
+    <tag Name="Difficult" />
+    <tag Name="DescriptionAddition" Value="This body plan will be {{r|difficult}} to play with." />
+    <tag Name="SummaryAddition" Value="{{r|Difficult to play}}" />
+    <tag Name="Symbols" Value="r::&#x13;" />
+  </object>
+
+  <object Name="UD_BodyPlan_Selection_BaseRestricted" Inherits="UD_BodyPlan_Selection_BaseConfiguration">
+    <tag Name="Restricted" />
+    <tag Name="BaseObject" Value="*noinherit" />
+  </object>
+
+  <object Name="UD_BodyPlan_Selection_NotOptional" Inherits="UD_BodyPlan_Selection_BaseRestricted">
     <tag Name="Anatomies" Value="HumanoidWithHandsFace" />
   </object>
 
-  <object Name="UD_BodyPlan_Selection_Sucks" Inherits="UD_BodyPlan_Selection_BaseExclusion">
-    <tag Name="Anatomies" Value="BipedalRobot,Clam,Echinoid,Mirror,Motes,Nest,Slug,Snail,Snake,Turret,Worm" />
-    <tag Name="Difficult" />
-    <tag Name="Optional" Value="AlwaysEnabled" />
-    <tag Name="ExceptionMessage" Value="This body plan will be {{r|difficult}} to play with." />
-    <tag Name="ExceptionSummary" Value="{{r|Difficult to play}}" />
-  </object>
-
-  <object Name="UD_BodyPlan_Selection_CloacaSurprise" Inherits="UD_BodyPlan_Selection_BaseExclusion">
+  <object Name="UD_BodyPlan_Selection_CloacaSurprise" Inherits="UD_BodyPlan_Selection_BaseRestricted">
     <xtagUD_BPS_Transformation
       Anatomy="SlugWithHands"
       RenderString="Q"
@@ -43,11 +50,12 @@
       Property="AteCloacaSurprise"
       Mutations="Bilge Sphincter" />
     <tag Name="Optional" />
-    <tag Name="ExceptionMessage" Value="Has the {{C|Bilge Sphincter}} mutation." />
-    <tag Name="ExceptionSummary" Value="Has {{C|Bilge Sphincter}}" />
+    <tag Name="DescriptionAddition" Value="Has the {{C|Bilge Sphincter}} mutation." />
+    <tag Name="SummaryAddition" Value="Has {{C|Bilge Sphincter}}" />
+    <tag Name="Symbols" Value="m::&#xf1;" />
   </object>
 
-  <object Name="UD_BodyPlan_Selection_CrystalDelight" Inherits="UD_BodyPlan_Selection_BaseExclusion">
+  <object Name="UD_BodyPlan_Selection_CrystalDelight" Inherits="UD_BodyPlan_Selection_BaseRestricted">
     <xtagUD_BPS_Transformation
       Anatomy="HumanoidOctohedron"
       RenderString="µ"
@@ -58,8 +66,9 @@
       Property="AteCrystalDelight"
       Mutations="Crystallinity" />
     <tag Name="Optional" />
-    <tag Name="ExceptionMessage" Value="Has the {{C|Crystallinity}} mutation." />
-    <tag Name="ExceptionSummary" Value="Has {{C|Crystallinity}}" />
+    <tag Name="DescriptionAddition" Value="Has the {{C|Crystallinity}} mutation." />
+    <tag Name="SummaryAddition" Value="Has {{C|Crystallinity}}" />
+    <tag Name="Symbols" Value="m::&#xf1;" />
   </object>
 
 </objects>

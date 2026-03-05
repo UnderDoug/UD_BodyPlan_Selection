@@ -8,11 +8,11 @@ using XRL;
 using XRL.World;
 using XRL.World.Anatomy;
 
-using static UD_BodyPlan_Selection.Mod.AnatomyExclusion;
+using static UD_BodyPlan_Selection.Mod.AnatomyConfiguration;
 
 namespace UD_BodyPlan_Selection.Mod
 {
-    public class AnatomyExclusion
+    public class AnatomyConfiguration
     {
         public static  string TransformXTagPrefix => "UD_BPS_Transformation";
 
@@ -104,35 +104,49 @@ namespace UD_BodyPlan_Selection.Mod
 
         public bool IsTransformation => Transformation != null;
 
+        public bool IsRestricted;
+
         public bool IsOptional;
 
-        public BooleanOptionDelegate ExemptThisExclusion;
+        public BooleanOptionDelegate EnableRestricted;
 
+        [Obsolete(message: "Moved to DescriptionAddition in v0.0.2, likely to stick around for a couple of versions.")]
         public string ExceptionMessage;
+
+        [Obsolete(message: "Moved to SummaryAddition in v0.0.2, likely to stick around for a couple of versions.")]
         public string ExceptionSummary;
 
-        public AnatomyExclusion()
+        public string DescriptionAddition;
+        public string SummaryAddition;
+
+        public List<KeyValuePair<char, string>> Symbols; // char color, string symbol
+
+        public AnatomyConfiguration()
         {
             Anatomies = null;
             Anatomy = null;
             IsDifficult = false;
             IsMechanical = false;
             Transformation = null;
+            IsRestricted = false;
             IsOptional = false;
-            ExemptThisExclusion = null;
-            ExceptionMessage = null;
-            ExceptionSummary = null;
+            EnableRestricted = null;
+            DescriptionAddition = null;
+            SummaryAddition = null;
+            Symbols = new();
         }
-        public AnatomyExclusion(
+        public AnatomyConfiguration(
             IReadOnlyList<string> Anatomies,
             string Anatomy,
             bool IsDifficult,
             bool IsMechanical,
             TransformationData Transformation,
+            bool IsRestricted,
             bool IsOptional,
-            BooleanOptionDelegate ExemptThisExclusion,
-            string ExceptionMessage,
-            string ExceptionSummary
+            BooleanOptionDelegate EnableRestricted,
+            string DescriptionAddition,
+            string SummaryAddition,
+            List<KeyValuePair<char, string>> Symbols
             )
             : this()
         {
@@ -141,14 +155,16 @@ namespace UD_BodyPlan_Selection.Mod
             this.IsDifficult = IsDifficult;
             this.IsMechanical = IsMechanical;
             this.Transformation = Transformation;
+            this.IsRestricted = IsRestricted;
             this.IsOptional = IsOptional;
-            this.ExemptThisExclusion = ExemptThisExclusion;
-            this.ExceptionMessage = ExceptionMessage;
-            this.ExceptionSummary = ExceptionSummary;
+            this.EnableRestricted = EnableRestricted;
+            this.DescriptionAddition = DescriptionAddition;
+            this.SummaryAddition = SummaryAddition;
+            this.Symbols = Symbols ?? new();
 
             if (Anatomies.IsNullOrEmpty())
             {
-                Utils.Log($"{typeof(AnatomyExclusion).CallChain(".ctor")}()");
+                Utils.Log($"{typeof(AnatomyConfiguration).CallChain(".ctor")}()");
                 Utils.Log($"{nameof(Anatomy)}: {Anatomy}", Indent: 1);
                 Utils.Log($"{nameof(IsDifficult)}: {IsDifficult}", Indent: 1);
                 Utils.Log($"{nameof(IsMechanical)}: {IsMechanical}", Indent: 1);
@@ -156,11 +172,15 @@ namespace UD_BodyPlan_Selection.Mod
                 if (IsTransformation)
                     Transformation.DebugOutput(2);
                 Utils.Log($"{nameof(IsOptional)}: {IsOptional}", Indent: 1);
-                Utils.Log($"{nameof(ExceptionMessage)}: {ExceptionMessage}", Indent: 1);
-                Utils.Log($"{nameof(ExceptionSummary)}: {ExceptionSummary}", Indent: 1);
+                Utils.Log($"{nameof(DescriptionAddition)}: {DescriptionAddition}", Indent: 1);
+                Utils.Log($"{nameof(SummaryAddition)}: {SummaryAddition}", Indent: 1);
+                Utils.Log($"{nameof(Symbols)}: {Symbols?.Count ?? 0}", Indent: 1);
+                if (!Symbols.IsNullOrEmpty())
+                    foreach ((char color, string symbol) in Symbols)
+                        Utils.Log("::{{" + color + "|" + symbol + "}}", Indent: 2);
             }
         }
-        public AnatomyExclusion(GameObjectBlueprint DataBucket)
+        public AnatomyConfiguration(GameObjectBlueprint DataBucket)
             : this()
         {
             if (DataBucket.TryGetTag("Anatomies", out string anatomies))
@@ -194,12 +214,12 @@ namespace UD_BodyPlan_Selection.Mod
                 Transformation = new(transformationData);
             }
 
-            Anatomy = Anatomies?[0];
+            // Anatomy = Anatomies?[0];
 
             IsDifficult = DataBucket.HasTag("Difficult")
                 || DataBucket.HasTag("Sucks");
 
-            Utils.Log($"{typeof(AnatomyExclusion).CallChain(".ctor")}({nameof(GameObjectBlueprint)}: {DataBucket.Name})");
+            Utils.Log($"{typeof(AnatomyConfiguration).CallChain(".ctor")}({nameof(GameObjectBlueprint)}: {DataBucket.Name})");
 
             Utils.Log($"{nameof(Anatomies)}:", Indent: 1);
             foreach (string anatomyEntry in Anatomies ?? new List<string>(0))
@@ -223,124 +243,201 @@ namespace UD_BodyPlan_Selection.Mod
             if (IsTransformation)
                 Transformation.DebugOutput(2);
 
+            IsRestricted = DataBucket.HasTag("Restricted");
+
             if (DataBucket.TryGetTag("Optional", out string optionID))
             {
                 IsOptional = true;
+                IsRestricted = true;
                 Utils.Log($"{nameof(IsOptional)}: {IsOptional}", Indent: 1);
 
                 if (!optionID.IsNullOrEmpty())
                 {
                     Utils.Log($"{nameof(optionID)}: {optionID}", Indent: 2);
                     if (optionID.EqualsNoCase("AlwaysEnabled"))
-                        ExemptThisExclusion = ()
+                        EnableRestricted = ()
                             => true;
                     else
-                        ExemptThisExclusion = ()
+                        EnableRestricted = ()
                             => XRL.UI.Options.GetOptionBool(optionID);
                 }
                 else
                 if (IsTransformation)
                 {
                     Utils.Log($"{nameof(optionID)}: {nameof(Options.EnableBodyPlansAvailableViaRecipe)}", Indent: 2);
-                    ExemptThisExclusion = ()
+                    EnableRestricted = ()
                         => Options.EnableBodyPlansAvailableViaRecipe;
                 }
                 else
                 {
                     Utils.Log($"{nameof(optionID)}: true (no option)", Indent: 2);
-                    ExemptThisExclusion = ()
+                    EnableRestricted = ()
                         => true;
                 }
             }
             else
                 Utils.Log($"{nameof(IsOptional)}: {IsOptional}", Indent: 1);
 
-            DataBucket.TryGetTag(nameof(ExceptionMessage), out ExceptionMessage);
-            DataBucket.TryGetTag(nameof(ExceptionSummary), out ExceptionSummary);
+            DataBucket.TryGetTag(nameof(ExceptionMessage), out DescriptionAddition);
+            DataBucket.TryGetTag(nameof(ExceptionSummary), out SummaryAddition);
 
-            Utils.Log($"{nameof(ExceptionMessage)}: {ExceptionMessage}", Indent: 1);
-            Utils.Log($"{nameof(ExceptionSummary)}: {ExceptionSummary}", Indent: 1);
-        }
-        public AnatomyExclusion(string Anatomy, AnatomyExclusion Source)
-            : this(
-                    Anatomies: null,
-                    Anatomy: Anatomy,
-                    IsDifficult: Source.IsDifficult,
-                    IsMechanical: Source.IsMechanical,
-                    Transformation: Source.Transformation,
-                    IsOptional: Source.IsOptional,
-                    ExemptThisExclusion: Source.ExemptThisExclusion,
-                    ExceptionMessage: Source.ExceptionMessage,
-                    ExceptionSummary: Source.ExceptionSummary
-                  )
-        {
-        }
-        public AnatomyExclusion(Anatomy Anatomy)
-        {
-            Anatomies = new List<string>() { Anatomy.Name };
-            IsMechanical = Anatomy.Category == BodyPartCategory.MECHANICAL;
-            IsOptional = IsMechanical || IsDifficult;
-            if (IsOptional)
+            DataBucket.TryGetTag(nameof(DescriptionAddition), out DescriptionAddition);
+            DataBucket.TryGetTag(nameof(SummaryAddition), out SummaryAddition);
+
+            Utils.Log($"{nameof(DescriptionAddition)}: {DescriptionAddition}", Indent: 1);
+            Utils.Log($"{nameof(SummaryAddition)}: {SummaryAddition}", Indent: 1);
+
+            Symbols = new();
+            if (DataBucket.TryGetTag(nameof(Symbols), out string symbols))
             {
-                if (IsMechanical)
-                    ExemptThisExclusion = ()
-                        => Options.EnableBodyPlansThatAreRobotic;
+                if (symbols.Split(";;") is string[] entries)
+                    foreach (string entry in entries)
+                        ProcessSymbolsString(ref Symbols, entry);
                 else
-                    ExemptThisExclusion = ()
-                        => true;
+                    ProcessSymbolsString(ref Symbols, symbols);
             }
         }
+        public AnatomyConfiguration(string Anatomy, AnatomyConfiguration Source)
+            : this(
+                Anatomies: null,
+                Anatomy: Anatomy,
+                IsDifficult: Source.IsDifficult,
+                IsMechanical: Source.IsMechanical,
+                Transformation: Source.Transformation,
+                IsRestricted: Source.IsRestricted,
+                IsOptional: Source.IsOptional,
+                EnableRestricted: Source.EnableRestricted,
+                DescriptionAddition: Source.DescriptionAddition,
+                SummaryAddition: Source.SummaryAddition,
+                Symbols: Source.Symbols)
+        { }
+        public AnatomyConfiguration(Anatomy Anatomy)
+            : this(
+                Anatomies: null,
+                Anatomy: Anatomy.Name,
+                IsDifficult: false,
+                IsMechanical: false,
+                Transformation: null,
+                IsRestricted: false,
+                IsOptional: false,
+                EnableRestricted: null,
+                DescriptionAddition: null,
+                SummaryAddition: null,
+                Symbols: new())
+        { }
 
-        public IEnumerable<AnatomyExclusion> FromAnatomiesList()
-            => Anatomies.Select(a => new AnatomyExclusion(a, this));
+        public static void ProcessSymbolsString(
+            ref List<KeyValuePair<char, string>> Symbols,
+            string Entry
+            )
+        {
+            Symbols ??= new();
+            char color = '\0';
+            string symbol = null;
+            if (Entry.Split("::") is string[] kvp)
+            {
+                if (kvp.Length > 1)
+                {
+                    if (!kvp[0].IsNullOrEmpty()
+                        && !kvp[1].IsNullOrEmpty())
+                    {
+                        symbol = kvp[1];
+                        if (!kvp[0].EqualsNoCase("null"))
+                            color = kvp[0][0];
+                    }
+                }
+                else
+                if (kvp.Length > 0)
+                    if (!kvp[0].IsNullOrEmpty())
+                        symbol = kvp[0];
+            }
+            if (!symbol.IsNullOrEmpty())
+                Symbols.Add(new(color, symbol));
+        }
 
-        public bool IsExcluded()
-            => !IsOptional
-            || !(ExemptThisExclusion?.Invoke() ?? true);
+        public IEnumerable<AnatomyConfiguration> FromAnatomiesList()
+        {
+            if (!Anatomy.IsNullOrEmpty())
+                yield return new(Anatomy, this);
+
+            if (!Anatomies.IsNullOrEmpty())
+                foreach (var anatomyConfiguration in Anatomies.Select(a => new AnatomyConfiguration(a, this)))
+                    yield return anatomyConfiguration;
+        }
+
+        public bool AllowSelection()
+            => !IsRestricted
+            || (IsOptional
+                && (EnableRestricted?.Invoke() ?? true));
+
+        public string GetAnatomy()
+            => Anatomy
+            ?? Anatomies?[0];
     }
 
-    public static class AnatomyExclusionExtensions
+    public static class AnatomyConfigurationExtensions
     {
-        public static bool IsExcluded(this IEnumerable<AnatomyExclusion> AnatomyExclusions)
-            => AnatomyExclusions.Any(e => e.IsExcluded())
+        public static bool AllowSelection(this IEnumerable<AnatomyConfiguration> AnatomyConfigurations)
+            => AnatomyConfigurations?.All(e => e.AllowSelection())
+            ?? false
             ;
-        public static bool Include(this IEnumerable<AnatomyExclusion> AnatomyExclusions)
-            => AnatomyExclusions == null
-            || !AnatomyExclusions.IsExcluded()
-            ;
-        public static bool IsMechanical(this IEnumerable<AnatomyExclusion> AnatomyExclusions)
-            => AnatomyExclusions.Any(e => e.IsMechanical)
-            ;
-        public static bool IsTransformation(this IEnumerable<AnatomyExclusion> AnatomyExclusions)
-            => AnatomyExclusions.Any(e => e.IsTransformation)
-            ;
-        public static bool IsDifficult(this IEnumerable<AnatomyExclusion> AnatomyExclusions)
-            => AnatomyExclusions.Any(e => e.IsDifficult)
-            ;
-        public static bool IsOptional(this IEnumerable<AnatomyExclusion> AnatomyExclusions)
-            => AnatomyExclusions.Any(e => e.IsOptional)
+        public static bool IsExcluded(this IEnumerable<AnatomyConfiguration> AnatomyConfigurations)
+            => !(AnatomyConfigurations?.AllowSelection()
+                ?? true)
             ;
 
-        public static TransformationData FirstTransformationOrDefault(this IEnumerable<AnatomyExclusion> AnatomyExclusions)
-            => AnatomyExclusions?.FirstOrDefault(e => e.IsTransformation)?.Transformation
+        public static bool IsMechanical(this IEnumerable<AnatomyConfiguration> AnatomyConfigurations)
+            => AnatomyConfigurations?.Any(e => e.IsMechanical)
+            ?? false
+            ;
+        public static bool IsTransformation(this IEnumerable<AnatomyConfiguration> AnatomyConfigurations)
+            => AnatomyConfigurations?.Any(e => e.IsTransformation)
+            ?? false
+            ;
+        public static bool IsDifficult(this IEnumerable<AnatomyConfiguration> AnatomyConfigurations)
+            => AnatomyConfigurations?.Any(e => e.IsDifficult)
+            ?? false
+            ;
+        public static bool IsOptional(this IEnumerable<AnatomyConfiguration> AnatomyConfigurations)
+            => AnatomyConfigurations?.Any(e => e.IsOptional)
+            ?? false
             ;
 
-        public static bool HasExceptionMessage(this IEnumerable<AnatomyExclusion> AnatomyExclusions)
-            => AnatomyExclusions.Any(e => !e.ExceptionMessage.IsNullOrEmpty())
-            ;
-        public static IEnumerable<string> ExceptionMessages(this IEnumerable<AnatomyExclusion> AnatomyExclusions)
-            => AnatomyExclusions
-                .Where(e => !e.ExceptionMessage.IsNullOrEmpty())
-                .Select(e => e.ExceptionMessage)
+        public static TransformationData FirstTransformationOrDefault(this IEnumerable<AnatomyConfiguration> AnatomyConfigurations)
+            => AnatomyConfigurations?.FirstOrDefault(e => e.IsTransformation)?.Transformation
             ;
 
-        public static bool HasExceptionSummary(this IEnumerable<AnatomyExclusion> AnatomyExclusions)
-            => AnatomyExclusions.Any(e => !e.ExceptionSummary.IsNullOrEmpty())
+        public static bool HasDescriptionAddition(this IEnumerable<AnatomyConfiguration> AnatomyConfigurations)
+            => (AnatomyConfigurations
+                ?.Any(e => !e.DescriptionAddition.IsNullOrEmpty()))
+            ?? false
             ;
-        public static IEnumerable<string> ExceptionSummaries(this IEnumerable<AnatomyExclusion> AnatomyExclusions)
-            => AnatomyExclusions
-                .Where(e => !e.ExceptionSummary.IsNullOrEmpty())
-                .Select(e => e.ExceptionSummary)
+        public static IEnumerable<string> DescriptionAdditions(this IEnumerable<AnatomyConfiguration> AnatomyConfigurations)
+            => AnatomyConfigurations
+                .Where(e => !e.DescriptionAddition.IsNullOrEmpty())
+                .Select(e => e.DescriptionAddition)
+            ;
+
+        public static bool HasSummaryAddition(this IEnumerable<AnatomyConfiguration> AnatomyConfigurations)
+            => (AnatomyConfigurations
+                ?.Any(e => !e.SummaryAddition.IsNullOrEmpty()))
+            ?? false
+            ;
+        public static IEnumerable<string> SummaryAdditions(this IEnumerable<AnatomyConfiguration> AnatomyConfigurations)
+            => AnatomyConfigurations
+                .Where(e => !e.SummaryAddition.IsNullOrEmpty())
+                .Select(e => e.SummaryAddition)
+            ;
+
+        public static bool HasSymbols(this IEnumerable<AnatomyConfiguration> AnatomyConfigurations)
+            => (AnatomyConfigurations
+                ?.Any(e => e.Symbols.Any(kvp => !kvp.Value.IsNullOrEmpty())))
+            ?? false
+            ;
+        public static IEnumerable<string> Symbols(this IEnumerable<AnatomyConfiguration> AnatomyConfigurations)
+            => AnatomyConfigurations
+                .Where(e => e.Symbols.Any(kvp => !kvp.Value.IsNullOrEmpty()))
+                .SelectMany(e => e.Symbols.Select(kvp => kvp.Key != '\0' ? $"{"{{"}{kvp.Key}|{kvp.Value}{"}}"}" : kvp.Value))
             ;
     }
 }

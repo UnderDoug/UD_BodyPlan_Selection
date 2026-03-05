@@ -105,59 +105,66 @@ namespace UD_BodyPlan_Selection.Mod
         }
 
         #endregion
-        #region AnatomyExclusions
+        #region AnatomyConfigurations
 
         [ModSensitiveStaticCache]
-        private static List<AnatomyExclusion> _AnatomyExclusions = null;
-        public static List<AnatomyExclusion> AnatomyExclusions
+        private static List<AnatomyConfiguration> _AnatomyConfigurations = null;
+        public static List<AnatomyConfiguration> AnatomyConfigurations
         {
             get
             {
-                if (_AnatomyExclusions.IsNullOrEmpty())
-                    _AnatomyExclusions = GameObjectFactory.Factory?.GetBlueprintsInheritingFrom("UD_BodyPlan_Selection_BaseExclusion")
-                        .SelectMany(bp => new AnatomyExclusion(bp).FromAnatomiesList())
+                if (_AnatomyConfigurations.IsNullOrEmpty())
+                    _AnatomyConfigurations = GameObjectFactory.Factory?.GetBlueprintsInheritingFrom("UD_BodyPlan_Selection_BaseConfiguration")
+                        .SelectMany(bp => new AnatomyConfiguration(bp).FromAnatomiesList())
                         .ToList();
 
-                return _AnatomyExclusions;
+                return _AnatomyConfigurations;
             }
         }
 
-        public static IEnumerable<AnatomyExclusion> GetAnatomyExclusions(string Anatomy)
-            => AnatomyExclusions?.Where(e => !e.Anatomy.IsNullOrEmpty() && e.Anatomy == Anatomy);
+        public static IEnumerable<AnatomyConfiguration> GetAnatomyConfigurations(string Anatomy)
+            => AnatomyConfigurations?.Where(e => !e.GetAnatomy().IsNullOrEmpty() && e.GetAnatomy() == Anatomy);
 
-        public static IEnumerable<AnatomyExclusion> GetAnatomyExclusions(Anatomy Anatomy)
+        public static IEnumerable<AnatomyConfiguration> GetAnatomyConfigurations(Anatomy Anatomy)
         {
             if (Anatomy == null)
                 yield break;
 
             bool anyMechanical = false;
-            foreach (AnatomyExclusion exclusion in GetAnatomyExclusions(Anatomy.Name))
+            foreach (AnatomyConfiguration configuration in GetAnatomyConfigurations(Anatomy.Name))
             {
-                anyMechanical = exclusion.IsMechanical
+                anyMechanical = configuration.IsMechanical
                     || anyMechanical;
-                yield return exclusion;
+                yield return configuration;
             }
 
             if (!anyMechanical
                 && Anatomy.Category == BodyPartCategory.MECHANICAL)
             {
-                var exclusion = new AnatomyExclusion(Anatomy);
-                AnatomyExclusions.Add(exclusion);
-                yield return exclusion;
+                var configuration = new AnatomyConfiguration(Anatomy)
+                {
+                    IsMechanical = true,
+                    IsRestricted = true,
+                    IsOptional = true,
+                    EnableRestricted = () => Options.EnableBodyPlansThatAreRobotic,
+                    Symbols = new() { new('c', "\x000F") },
+                };
+                AnatomyConfigurations.Add(configuration);
+                yield return configuration;
             }
         }
-        public static IEnumerable<AnatomyExclusion> GetAnatomyExclusions(AnatomyChoice Choice)
-            => GetAnatomyExclusions(Choice?.Anatomy)
+        public static IEnumerable<AnatomyConfiguration> GetAnatomyConfigurations(AnatomyChoice Choice)
+            => GetAnatomyConfigurations(Choice?.Anatomy)
             ;
 
-        public static bool TryGetAnatomyExclusions(string Anatomy, out IEnumerable<AnatomyExclusion> AnatomyExclusion)
-            => (AnatomyExclusion = GetAnatomyExclusions(Anatomy)).IsNullOrEmpty()
+        public static bool TryGetAnatomyConfigurations(string Anatomy, out IEnumerable<AnatomyConfiguration> AnatomyConfigurations)
+            => (AnatomyConfigurations = GetAnatomyConfigurations(Anatomy)).IsNullOrEmpty()
             ;
-        public static bool TryGetAnatomyExclusions(Anatomy Anatomy, out IEnumerable<AnatomyExclusion> AnatomyExclusion)
-            => TryGetAnatomyExclusions(Anatomy?.Name, out AnatomyExclusion)
+        public static bool TryGetAnatomyConfigurations(Anatomy Anatomy, out IEnumerable<AnatomyConfiguration> AnatomyConfigurations)
+            => TryGetAnatomyConfigurations(Anatomy?.Name, out AnatomyConfigurations)
             ;
-        public static bool TryGetAnatomyExclusionsFor(AnatomyChoice Choice, out IEnumerable<AnatomyExclusion> AnatomyExclusion)
-            => TryGetAnatomyExclusions(Choice?.Anatomy, out AnatomyExclusion)
+        public static bool TryGetAnatomyConfigurations(AnatomyChoice Choice, out IEnumerable<AnatomyConfiguration> AnatomyConfigurations)
+            => TryGetAnatomyConfigurations(Choice?.Anatomy, out AnatomyConfigurations)
             ;
 
         #endregion

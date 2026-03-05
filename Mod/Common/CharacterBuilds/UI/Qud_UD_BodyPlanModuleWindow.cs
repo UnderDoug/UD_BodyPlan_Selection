@@ -89,12 +89,12 @@ namespace XRL.CharacterBuilds.Qud.UI
 
         public override UIBreadcrumb GetBreadcrumb()
         {
-            Renderable renderable = (module?.SelectedChoice())?.GetRenderable();
+            Renderable renderable = module?.SelectedChoice()?.GetRenderable();
 
             return new()
             {
                 Id = GetType().FullName,
-                Title = (module?.SelectedChoice())?.GetDescription() ?? "Body Plan",
+                Title = module?.SelectedChoice()?.GetDescription() ?? "Body Plan",
                 IconPath = renderable?.getTile() ?? "Creatures/natural-weapon-fist.bmp",
                 IconDetailColor = ColorUtility.ColorMap[renderable?.getColorChars().detail ?? 'W'],
                 IconForegroundColor = ColorUtility.ColorMap[renderable?.getColorChars().foreground ?? 'w']
@@ -141,27 +141,9 @@ namespace XRL.CharacterBuilds.Qud.UI
                     bool isSelected = module.IsSelected(choice);
 
                     if (isSelected)
-                        sB.AppendColored("W", choice.GetDescription(ShowDefault: true));
+                        sB.AppendColored("W", choice.GetDescription(ShowDefault: true, ShowSymbols: true));
                     else
-                        sB.Append(choice.GetDescription(ShowDefault: true));
-
-                    if (!choice.AnatomyExclusions.IsNullOrEmpty())
-                    {
-                        using var symbols = ScopeDisposedList<string>.GetFromPool();
-
-                        if (choice.AnatomyExclusions.IsTransformation())
-                            symbols.Add("{{m|\u00f1}}"); // ±
-
-                        if (choice.AnatomyExclusions.IsMechanical()
-                            && Options.EnableRoboticBodyPlansMakingYouRobotic)
-                            symbols.Add("{{c|\u000f}}"); // ☼
-
-                        if (choice.AnatomyExclusions.IsDifficult())
-                            symbols.Add("{{r|\u0013}}"); // ‼
-
-                        if (!symbols.IsNullOrEmpty())
-                            sB.Append($" {symbols.Aggregate("", (a, n) => a + n)}");
-                    }
+                        sB.Append(choice.GetDescription(ShowDefault: true, ShowSymbols: true));
 
                     string longDesc = isTK ? choice.LongDescriptionTK : choice.LongDescription;
 
