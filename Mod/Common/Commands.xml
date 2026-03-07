@@ -1,0 +1,7 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<commands>
+  <command ID="Cmd_UDBPS_SortAnatomies" DisplayText="Change sort order" Category="Character Creation" Layer="Chargen">
+    <keyboardBind Key="tab"/>
+    <gamepadBind Button="rightTrigger"/>
+  </command>
+</commands>

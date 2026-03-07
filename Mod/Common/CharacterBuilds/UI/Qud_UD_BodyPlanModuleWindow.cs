@@ -1,4 +1,6 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 using ConsoleLib.Console;
 
@@ -10,10 +12,10 @@ using XRL.UI;
 using XRL.UI.Framework;
 
 using ColorUtility = ConsoleLib.Console.ColorUtility;
+using Event = XRL.World.Event;
 
 using UD_BodyPlan_Selection.Mod;
 using Options = UD_BodyPlan_Selection.Mod.Options;
-using System.Linq;
 
 namespace XRL.CharacterBuilds.Qud.UI
 {
@@ -31,8 +33,8 @@ namespace XRL.CharacterBuilds.Qud.UI
             public int Weight;
         }
 
+        protected const string COMMAND_SORT_ANATOMIES = "Cmd_UDBPS_SortAnatomies";
         protected const string EMPTY_CHECK = "[ ]";
-
         protected const string CHECKED = "[■]";
 
         // don't remove this. It's what allows the first call to UpdateControls() to actually update the controls.
@@ -43,6 +45,16 @@ namespace XRL.CharacterBuilds.Qud.UI
         private List<Qud_UD_BodyPlanModule.AnatomyChoice> AnatomyChoices => module?.AnatomyChoices;
 
         private PrefixMenuOption Selected;
+
+        private bool SortByCategory
+        {
+            get => module?.SortByCategory ?? false;
+            set
+            {
+                if (module != null)
+                    module.SortByCategory = value;
+            }
+        }
 
         public bool TrySetupModuleData()
         {
@@ -115,16 +127,61 @@ namespace XRL.CharacterBuilds.Qud.UI
 
         public override UIBreadcrumb GetBreadcrumb()
         {
-            Renderable renderable = module?.SelectedChoice()?.GetRenderable();
-
+            var renderable = module?.SelectedChoice()?.GetRenderable();
             return new()
             {
                 Id = GetType().FullName,
                 Title = module?.SelectedChoice()?.GetDescription() ?? "Body Plan",
                 IconPath = renderable?.getTile() ?? "Creatures/natural-weapon-fist.bmp",
+                HFlip = renderable?.HFlip ?? false,
                 IconDetailColor = ColorUtility.ColorMap[renderable?.getColorChars().detail ?? 'W'],
                 IconForegroundColor = ColorUtility.ColorMap[renderable?.getColorChars().foreground ?? 'w']
             };
+        }
+
+        private string GetSortMenuDescription()
+        {
+            var sB = Event.NewStringBuilder("Sort ");
+
+            string alphabetical = "Alphabetically";
+            string category = "By Category";
+
+            string yes = "";
+            string no = "K";
+
+            if (SortByCategory)
+                sB.AppendColored(no, alphabetical).Append("/").AppendColored(yes, category);
+            else
+                sB.AppendColored(yes, alphabetical).Append("/").AppendColored(no, category);
+
+            return Event.FinalizeString(sB);
+        }
+        public override IEnumerable<MenuOption> GetKeyMenuBar()
+        {
+            yield return new MenuOption
+            {
+                Id = COMMAND_SORT_ANATOMIES,
+                InputCommand = COMMAND_SORT_ANATOMIES,
+                KeyDescription = ControlManager.getCommandInputDescription(COMMAND_SORT_ANATOMIES),
+                Description = GetSortMenuDescription()
+            };
+            foreach (var menuOption in base.GetKeyMenuBar())
+                yield return menuOption;
+        }
+        public override void HandleMenuOption(MenuOption menuOption)
+        {
+            if (menuOption.Id == COMMAND_SORT_ANATOMIES)
+                SortOptions(!SortByCategory);
+            else
+                base.HandleMenuOption(menuOption);
+        }
+
+        public void SortOptions(bool SortByCategory)
+        {
+            this.SortByCategory = SortByCategory;
+            module?.OrganizeAnatomyChoices(ForceSort: true);
+            UpdateControls(OverrideHasShown: true);
+            module.builder.RefreshActiveWindow();
         }
 
         public void SelectAnatomy(int n)
@@ -161,7 +218,7 @@ namespace XRL.CharacterBuilds.Qud.UI
             {
                 using var choicesToDelete = ScopeDisposedList<int>.GetFromPool();
                 bool isTK = module?.GenotypeModuleData?.Entry?.IsTrueKin ?? false;
-                var sB = World.Event.NewStringBuilder();
+                var sB = Event.NewStringBuilder();
                 for (int i = 0; i < AnatomyChoices.Count; i++)
                 {
                     if (AnatomyChoices[i] is not Qud_UD_BodyPlanModule.AnatomyChoice choice)
@@ -181,9 +238,9 @@ namespace XRL.CharacterBuilds.Qud.UI
 
                     if (choice.IsDefault)
                     {
-                        if (module.GenotypeModuleData.Entry is GenotypeEntry genotypeEntry)
+                        if (module?.GenotypeModuleData?.Entry is GenotypeEntry genotypeEntry)
                             choice.OverrideRenderable(new(genotypeEntry));
-                        if (module.SubtypeModuleData.Entry is SubtypeEntry subtypeEntry)
+                        if (module?.SubtypeModuleData?.Entry is SubtypeEntry subtypeEntry)
                             choice.OverrideRenderable(new(subtypeEntry));
                     }
 
@@ -207,7 +264,7 @@ namespace XRL.CharacterBuilds.Qud.UI
                 foreach (int index in choicesToDelete)
                     AnatomyChoices.RemoveAt(index);
 
-                World.Event.ResetTo(sB);
+                Event.ResetTo(sB);
             }
 
             // This method exists in two conditionally loaded partials:

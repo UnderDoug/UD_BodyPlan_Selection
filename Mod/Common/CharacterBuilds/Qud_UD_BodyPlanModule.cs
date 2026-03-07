@@ -10,10 +10,10 @@ using XRL.World;
 using XRL.World.Anatomy;
 using XRL.World.Parts;
 
+using Event = XRL.World.Event;
+
 using UD_BodyPlan_Selection.Mod;
 using static UD_BodyPlan_Selection.Mod.AnatomyConfiguration;
-using Event = XRL.World.Event;
-using XRL.Collections;
 
 namespace XRL.CharacterBuilds.Qud
 {
@@ -331,7 +331,7 @@ namespace XRL.CharacterBuilds.Qud
                             GetDefaultBehaviorString(SB, defaultBehvaiour, true);
 
                         if (IsTrueKin
-                            && limb.Category != BodyPartCategory.ANIMAL)
+                            && (limb?.Category ?? BodyPartCategory.ANIMAL) != BodyPartCategory.ANIMAL)
                             SB.AppendNoCybernetics();
                     }
                     GetLongDescriptionExtras(SB, Summary);
@@ -562,6 +562,43 @@ namespace XRL.CharacterBuilds.Qud
                 ;
         }
 
+        private class AnatomyChoiceComparer : IComparer<AnatomyChoice>, IDisposable
+        {
+            public bool SortByCategory;
+            public AnatomyChoiceComparer(bool SortByCategory)
+                => this.SortByCategory = SortByCategory;
+
+            public int Compare(AnatomyChoice x, AnatomyChoice y)
+            {
+                Utils.Log($"{x?.Anatomy?.Name ?? "NO_X"} CompareTo {y?.Anatomy?.Name ?? "NO_Y"}");
+                if (SortByCategory)
+                {
+                    Utils.Log($"    {nameof(SortByCategory)} (-1 counts as 1)");
+                    Utils.Log($"    - {nameof(x)}: [{x?.Anatomy?.Category ?? -1}, {x?.Anatomy?.BodyCategory ?? -1}]; {nameof(y)}: [{y?.Anatomy?.Category ?? -1}, {y?.Anatomy?.BodyCategory ?? -1}]");
+                    int xCat = x?.Anatomy?.Category
+                        ?? x?.Anatomy?.BodyCategory
+                        ?? 1;
+
+                    int yCat = y?.Anatomy?.Category
+                        ?? y?.Anatomy?.BodyCategory
+                        ?? 1;
+
+                    int catComp = xCat.CompareTo(yCat);
+                    Utils.Log($"   = {nameof(catComp)}: {catComp}");
+                    if (catComp != 0)
+                        return catComp;
+                }
+                string xName = x?.Anatomy?.Name;
+                string yName = y?.Anatomy?.Name;
+
+                return string.Compare(xName, yName);
+            }
+
+            public void Dispose()
+            {
+            }
+        }
+
         public static string GetDefaultSelectionUIEvent => $"{nameof(Qud_UD_BodyPlanModule)}_{nameof(GetDefaultSelectionUIEvent)}";
 
         private static bool WantClearChoices = false;
@@ -631,10 +668,13 @@ namespace XRL.CharacterBuilds.Qud
         public QudGenotypeModuleData GenotypeModuleData => builder?.GetModule<QudGenotypeModule>()?.data;
         public QudSubtypeModuleData SubtypeModuleData => builder?.GetModule<QudSubtypeModule>()?.data;
 
+        public bool SortByCategory;
+
         public Qud_UD_BodyPlanModule()
         {
             _AnatomyChoices = null;
             _PlayerAnatomyChoice = null;
+            SortByCategory = false;
         }
 
         public override bool shouldBeEditable()
@@ -682,19 +722,27 @@ namespace XRL.CharacterBuilds.Qud
             object element = null
             )
         {
+            if (shouldBeEnabled()
+                && (data == null
+                    || data.Selection == null))
+            {
+                MetricsManager.LogWarning("Body Plan module was active but data or selections was null or empty.");
+                return base.handleBootEvent(id, game, info, element);
+            }
+
             if (element is GameObject player
                 && player.Body is Body playerBody
                 && data.Selection.Anatomy is string anatomy)
             {
-                if (data == null
-                    || data.Selection == null)
-                {
-                    MetricsManager.LogWarning("Body Plan module was active but data or selections was null or empty.");
-                    return element;
-                }
-
                 if (id == QudGameBootModule.BOOTEVENT_BOOTPLAYEROBJECT)
+                {
                     playerBody.Rebuild(data.Selection.Anatomy);
+                    if (data.Selection.Transformation is TransformationData xForm
+                        && !xForm.Mutations.IsNullOrEmpty())
+                        foreach (string mutation in xForm.Mutations)
+                            if (MutationFactory.TryGetMutationEntry(mutation, out var mutationEntry))
+                                player.RequirePart<Mutations>().AddMutation(mutationEntry);
+                }
 
                 if (id == QudGameBootModule.BOOTEVENT_AFTERBOOTPLAYEROBJECT)
                 {
@@ -708,22 +756,6 @@ namespace XRL.CharacterBuilds.Qud
                         if (!xForm.Property.IsNullOrEmpty())
                             player.SetStringProperty(xForm.Property, "true");
 
-                        if (!xForm.Mutations.IsNullOrEmpty())
-                            foreach (string mutation in xForm.Mutations)
-                                if (MutationFactory.TryGetMutationEntry(mutation, out var mutationEntry))
-                                    player.RequirePart<Mutations>().AddMutation(mutationEntry);
-
-                        if (player?.Render?.Tile == defaultTile
-                            && !xForm.Tile.IsNullOrEmpty())
-                        {
-                            if (!xForm.RenderString.IsNullOrEmpty())
-                                player.Render.RenderString = xForm.RenderString;
-                            player.Render.Tile = xForm.Tile;
-                        }
-
-                        if (!xForm.DetailColor.IsNullOrEmpty())
-                            player.Render.DetailColor = xForm.DetailColor;
-
                         if (player?.GetSpecies() == defaultSpecies
                             && !xForm.Species.IsNullOrEmpty())
                             player.SetStringProperty("Species", xForm.Species);
@@ -733,6 +765,36 @@ namespace XRL.CharacterBuilds.Qud
                         && Options.EnableRoboticBodyPlansMakingYouRobotic)
                         World.ObjectBuilders.Roboticized.Roboticize(player);
                 }
+            }
+            else
+            if (data.Selection.Transformation is TransformationData xForm)
+            {
+                string stringElement = element as string;
+                if (id == QudGameBootModule.BOOTEVENT_BOOTPLAYERTILE)
+                {
+                    string defaultTile = SubtypeModuleData?.Entry?.Tile
+                        .Coalesce(GenotypeModuleData?.Entry.Tile);
+
+                    if (stringElement == defaultTile
+                        && !xForm.Tile.IsNullOrEmpty())
+                        return xForm.Tile
+                            ?? stringElement;
+                }
+                if (id == QudGameBootModule.BOOTEVENT_BOOTPLAYERTILEFOREGROUND)
+                    if (!xForm.TileColor.IsNullOrEmpty())
+                    {
+                        if (stringElement.IsNullOrEmpty())
+                            return xForm.TileColor.Replace("&", "")
+                                ?? stringElement;
+                        else
+                            return xForm.TileColor
+                                ?? stringElement;
+                    }
+
+                if (id == QudGameBootModule.BOOTEVENT_BOOTPLAYERTILEDETAIL)
+                    if (!xForm.DetailColor.IsNullOrEmpty())
+                        return xForm.DetailColor
+                            ?? stringElement;
             }
             return base.handleBootEvent(id, game, info, element);
         }
@@ -791,7 +853,7 @@ namespace XRL.CharacterBuilds.Qud
             && Choice.Anatomy != null
             && (Choice?.AnatomyConfigurations?.AllowSelection() ?? true)
             ;
-        public void OrganizeAnatomyChoices(bool SelectDefaultChoice = false, bool OverrideSelection = false)
+        public void OrganizeAnatomyChoices(bool SelectDefaultChoice = false, bool OverrideSelection = false, bool ForceSort = false)
         {
             if (AnatomyChoices.IsNullOrEmpty())
             {
@@ -800,14 +862,20 @@ namespace XRL.CharacterBuilds.Qud
             }
 
             PlayerAnatomyChoice = null;
-            if (PlayerAnatomyChoice != null
-                && !IsPlayerChoice(AnatomyChoices[0]))
+            if ((PlayerAnatomyChoice != null
+                    && !IsPlayerChoice(AnatomyChoices[0]))
+                || ForceSort)
             {
-                AnatomyChoices.OrderBy(a => a?.Anatomy?.Name);
+                using (var comparer = new AnatomyChoiceComparer(SortByCategory))
+                {
+                    Utils.Log($"using {nameof(comparer)}");
+                    AnatomyChoices.StableSortInPlace(comparer);
+                }
                 AnatomyChoices.Remove(PlayerAnatomyChoice);
                 AnatomyChoices.Insert(0, PlayerAnatomyChoice);
                 SetDefaultChoice();
-                if (SelectDefaultChoice)
+                if (SelectDefaultChoice
+                    && !SortByCategory)
                     this.SelectDefaultChoice(OverrideSelection);
             }
         }
@@ -851,7 +919,10 @@ namespace XRL.CharacterBuilds.Qud
 
         public void SetDefaultChoice()
         {
-            if (AnatomyChoices.FirstOrDefault(c => c.IsDefault) is AnatomyChoice defaultChoice
+            if (AnatomyChoices.IsNullOrEmpty())
+                return;
+
+            if (AnatomyChoices.FirstOrDefault(c => c?.IsDefault ?? false) is AnatomyChoice defaultChoice
                 && defaultChoice != PlayerAnatomyChoice)
             {
                 defaultChoice.IsDefault = false;

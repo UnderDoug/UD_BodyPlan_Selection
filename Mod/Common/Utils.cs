@@ -170,7 +170,7 @@ namespace UD_BodyPlan_Selection.Mod
         #endregion
         #region Pseudo-Debug
 
-        public static bool DisableDebug = true;
+        public static bool DisableDebug = false;
 
         public static void Log(string Message, int Indent = 0)
         {
