@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace UD_BodyPlan_Selection.Mod
+﻿namespace UD_BodyPlan_Selection.Mod
 {
     public static class Const
     {

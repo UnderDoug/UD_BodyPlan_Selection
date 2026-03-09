@@ -2,18 +2,22 @@
 
 namespace UD_BodyPlan_Selection.Mod
 {
-    [HasOptionFlagUpdate(Prefix = "Option_UD_BodyPlan_Selection_", FieldFlags = true)]
+    [HasModSensitiveStaticCache]
+    [HasOptionFlagUpdate(Prefix = "Option_UD_BodyPlan_Selection_")]
     public static class Options
     {
         // Debug Settings
         // public static bool DebugEnableOption;
 
         // General Settings
-        public static bool EnableBodyPlansForTK;
+        [OptionFlag] public static bool EnableBodyPlansForTK;
 
-        public static bool EnableBodyPlansAvailableViaRecipe;
+        [OptionFlag] public static bool EnableBodyPlansAvailableViaRecipe;
 
-        public static bool EnableBodyPlansThatAreRobotic;
-        public static bool EnableRoboticBodyPlansMakingYouRobotic;
+        [OptionFlag] public static bool EnableBodyPlansThatAreRobotic;
+        [OptionFlag] public static bool EnableRoboticBodyPlansMakingYouRobotic;
+
+        [ModSensitiveStaticCache]
+        public static bool SortByCategory = true;
     }
 }

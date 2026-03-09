@@ -1,10 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
-using System.Text;
 
-using XRL;
 using XRL.World;
 using XRL.World.Anatomy;
 
@@ -213,8 +210,6 @@ namespace UD_BodyPlan_Selection.Mod
                 }
                 Transformation = new(transformationData);
             }
-
-            // Anatomy = Anatomies?[0];
 
             IsDifficult = DataBucket.HasTag("Difficult")
                 || DataBucket.HasTag("Sucks");

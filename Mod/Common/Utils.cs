@@ -8,15 +8,13 @@ using System.Text.RegularExpressions;
 using ConsoleLib.Console;
 
 using XRL;
-using XRL.CharacterBuilds;
-using XRL.CharacterBuilds.Qud;
 using XRL.Collections;
 using XRL.Wish;
 using XRL.World;
 using XRL.World.Anatomy;
 using XRL.World.Parts;
 
-using static XRL.CharacterBuilds.Qud.Qud_UD_BodyPlanModule;
+using static UD_BodyPlan_Selection.Mod.CharacterBuilds.QudBodyPlanModule;
 
 namespace UD_BodyPlan_Selection.Mod
 {
@@ -170,7 +168,7 @@ namespace UD_BodyPlan_Selection.Mod
         #endregion
         #region Pseudo-Debug
 
-        public static bool DisableDebug = false;
+        public static bool DisableDebug = true;
 
         public static void Log(string Message, int Indent = 0)
         {
@@ -211,6 +209,12 @@ namespace UD_BodyPlan_Selection.Mod
 
         public static bool IsNotEqualDepthToRoot(BodyPart BodyPart)
             => !IsEqualDepthToRoot(BodyPart);
+
+        public static int GetCategoryCode(string Anatomy)
+            => Anatomies.GetAnatomyOrFail(Anatomy).BodyCategory is int category
+            ? category
+            : 1
+            ;
 
         #region Wishes
 

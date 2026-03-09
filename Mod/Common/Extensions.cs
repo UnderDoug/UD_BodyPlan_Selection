@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -7,7 +6,6 @@ using System.Text;
 using System.Text.RegularExpressions;
 
 using XRL;
-using XRL.Collections;
 using XRL.World;
 using XRL.World.Anatomy;
 using XRL.World.Parts;
@@ -359,5 +357,17 @@ namespace UD_BodyPlan_Selection.Mod
                         seed: SB,
                         func: AggregateNewline);
         }
+
+        public static bool IsShader(this string String)
+            => ConsoleLib.Console.MarkupShaders.Shaders.Any(s => s.GetName() == String);
+
+        public static bool IsColor(this string String)
+            => ConsoleLib.Console.MarkupShaders.Colors.Any(s => s.GetName() == String);
+
+        public static string ShaderColorOrNull(this string String)
+            => String.IsShader()
+                || String.IsColor()
+            ? String
+            : null;
     }
 }

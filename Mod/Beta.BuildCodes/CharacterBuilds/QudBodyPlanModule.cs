@@ -1,8 +1,8 @@
-using UD_BodyPlan_Selection.Mod;
+using XRL.CharacterBuilds;
 
-namespace XRL.CharacterBuilds.Qud
+namespace UD_BodyPlan_Selection.Mod.CharacterBuilds
 {
-    public partial class Qud_UD_BodyPlanModule : QudEmbarkBuilderModule<Qud_UD_BodyPlanModuleData>
+    public partial class QudBodyPlanModule : QudEmbarkBuilderModule<QudBodyPlanModuleData>
     {
         public override string GetRequiredMod()
             => SelectedChoice() != PlayerAnatomyChoice
