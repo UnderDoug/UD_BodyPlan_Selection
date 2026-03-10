@@ -23,7 +23,7 @@
   </object-->
 
   <object Name="UD_BodyPlan_Selection_Sucks" Inherits="UD_BodyPlan_Selection_BaseConfiguration">
-    <tag Name="Anatomies" Value="BipedalRobot,Clam,Echinoid,Mirror,Motes,Nest,Slug,Snail,Snake,Turret,Worm" />
+    <tag Name="Anatomies" Value="BipedalRobot,Clam,Echinoid,Mirror,Motes,Nest,Oddity,Slug,Snail,Snake,Turret,Worm" />
     <tag Name="Difficult" />
     <tag Name="DescriptionAddition" Value="This body plan will be {{r|difficult}} to play with." />
     <tag Name="SummaryAddition" Value="{{r|Difficult to play}}" />

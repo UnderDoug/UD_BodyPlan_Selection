@@ -98,6 +98,8 @@ namespace UD_BodyPlan_Selection.Mod.CharacterBuilds
             set => Options.SortByCategory = value;
         }
 
+        private static bool LastSortByCategoryValue = Options.SortByCategory;
+
         public QudBodyPlanModule()
         {
             _AnatomyChoices = null;
@@ -175,8 +177,6 @@ namespace UD_BodyPlan_Selection.Mod.CharacterBuilds
                 {
                     string defaultSpecies = SubtypeModuleData?.Entry?.Species
                         .Coalesce(GenotypeModuleData?.Entry.Species);
-                    string defaultTile = SubtypeModuleData?.Entry?.Tile
-                        .Coalesce(GenotypeModuleData?.Entry.Tile);
 
                     if (data.Selection.Transformation is TransformationData xForm)
                     {
@@ -272,7 +272,10 @@ namespace UD_BodyPlan_Selection.Mod.CharacterBuilds
         [OptionFlagUpdate]
         public static void OnOptionUpdate()
         {
-            WantClearChoices = true;
+            if (LastSortByCategoryValue == Options.SortByCategory)
+                WantClearChoices = true;
+            else
+                LastSortByCategoryValue = Options.SortByCategory;
         }
 
         public static bool AnatomyChoiceIsValid(AnatomyChoice Choice)

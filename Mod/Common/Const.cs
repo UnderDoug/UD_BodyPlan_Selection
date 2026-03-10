@@ -2,6 +2,9 @@
 {
     public static class Const
     {
+        public const string THIS_MOD_ID = "UD_BodyPlan_Selection";
+        public static string REMOVE_TAG => "*remove";
+
         public const char SQRE = '\u00fe'; // ■
         public const char NBSP = '\u00ff'; // non-breaking space
 

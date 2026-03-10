@@ -13,6 +13,7 @@ using XRL.World.Parts;
 using static UD_BodyPlan_Selection.Mod.Utils;
 using static UD_BodyPlan_Selection.Mod.Const;
 using System.Collections.Concurrent;
+using XRL.Collections;
 
 namespace UD_BodyPlan_Selection.Mod
 {
@@ -110,6 +111,48 @@ namespace UD_BodyPlan_Selection.Mod
                 seed = func(seed, i);
 
             return seed;
+        }
+
+        public static IEnumerable<AnatomyPart> LoopParts(this AnatomyPart AnatomyPart)
+        {
+            yield return AnatomyPart;
+
+            if (AnatomyPart.Subparts.IsNullOrEmpty())
+                yield break;
+
+            foreach (var subpart in AnatomyPart.Subparts)
+                foreach (var loopedPart in subpart.LoopParts())
+                    yield return loopedPart;
+        }
+
+        public static IEnumerable<AnatomyPart> LoopParts(this Anatomy Anatomy)
+        {
+            if (Anatomy == null)
+                yield break;
+
+            foreach (var part in Anatomy.Parts)
+                foreach (var loopedPart in part.LoopParts())
+                    yield return loopedPart;
+        }
+
+        public static bool HasPartsIncompatibleWithCybernetics(this Anatomy Anatomy)
+        {
+            if (Anatomy == null)
+                return false;
+
+            int anatomyCategory = Anatomy?.BodyCategory
+                ?? Anatomy.Category
+                ?? BodyPartCategory.ANIMAL;
+
+            if (anatomyCategory != BodyPartCategory.ANIMAL)
+                return true;
+
+            using var anatomyParts = ScopeDisposedList<AnatomyPart>.GetFromPoolFilledWith(Anatomy.LoopParts());
+
+            if (anatomyParts.Any(p => (p?.Category ?? BodyPartCategory.ANIMAL) != BodyPartCategory.ANIMAL))
+                return true;
+
+            return false;
         }
 
         public static BallBag<T> AddA<T>(this BallBag<T> Bag, T Ball, int Weight)

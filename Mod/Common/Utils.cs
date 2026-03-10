@@ -15,6 +15,7 @@ using XRL.World.Anatomy;
 using XRL.World.Parts;
 
 using static UD_BodyPlan_Selection.Mod.CharacterBuilds.QudBodyPlanModule;
+using static UD_BodyPlan_Selection.Mod.Const;
 
 namespace UD_BodyPlan_Selection.Mod
 {
@@ -22,8 +23,6 @@ namespace UD_BodyPlan_Selection.Mod
     [HasModSensitiveStaticCache]
     public static partial class Utils
     {
-        public static string THIS_MOD_ID => "UD_BodyPlan_Selection";
-
         public static ModInfo ThisMod => ModManager.GetMod(THIS_MOD_ID);
 
         #region Blueprints For Display

@@ -250,6 +250,7 @@ namespace UD_BodyPlan_Selection.Mod.CharacterBuilds.UI
             module?.OrganizeAnatomyChoices();
             UpdateControls(OverrideHasShown: true);
             module.builder.RefreshActiveWindow();
+            HighlightSelected();
         }
 
         public void SelectAnatomy(int n)
@@ -290,7 +291,7 @@ namespace UD_BodyPlan_Selection.Mod.CharacterBuilds.UI
             if (IsSelected)
                 SB.AppendColored("W", Choice.GetDescription(ShowDefault: !SortByCategory, ShowSymbols: true));
             else
-                SB.Append(Choice.GetDescription(ShowDefault: !SortByCategory, ShowSymbols: true));
+                SB.Append(Choice.GetDescription(ShowDefault: !SortByCategory, ShowSymbols: true, IsTrueKin: IsTK));
 
             string longDesc = IsTK ? Choice.LongDescriptionTK : Choice.LongDescription;
 

@@ -398,7 +398,7 @@ namespace UD_BodyPlan_Selection.Mod
             ?? false
             ;
 
-        public static TransformationData FirstTransformationOrDefault(this IEnumerable<AnatomyConfiguration> AnatomyConfigurations)
+        public static AnatomyConfiguration.TransformationData FirstTransformationOrDefault(this IEnumerable<AnatomyConfiguration> AnatomyConfigurations)
             => AnatomyConfigurations?.FirstOrDefault(e => e.IsTransformation)?.Transformation
             ;
 

@@ -9,6 +9,7 @@ namespace UD_BodyPlan_Selection.Mod.CharacterBuilds
     {
         public string Anatomy;
         public TransformationData Transformation;
+        public BodyPlanEntry Entry => null; // change this once it's set up.
 
         public QudBodyPlanModuleDataRow()
         {

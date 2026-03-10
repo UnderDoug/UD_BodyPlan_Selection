@@ -17,6 +17,7 @@ using static UD_BodyPlan_Selection.Mod.AnatomyConfiguration;
 
 namespace UD_BodyPlan_Selection.Mod
 {
+    [HasOptionFlagUpdate]
     public class AnatomyChoice
     {
         [HasModSensitiveStaticCache]
@@ -49,7 +50,7 @@ namespace UD_BodyPlan_Selection.Mod
             {
                 this.HFlip = HFlip;
             }
-            public ChoiceRenderable(TransformationData Transformation, bool HFlip = false)
+            public ChoiceRenderable(AnatomyConfiguration.TransformationData Transformation, bool HFlip = false)
                 : this(
                       Tile: Transformation?.Tile,
                       RenderString: Transformation?.RenderString ?? "@",
@@ -129,6 +130,8 @@ namespace UD_BodyPlan_Selection.Mod
                 => HFlip;
         }
 
+        private bool LastSortByCategoryValue = Options.SortByCategory;
+
         protected static StringBuilder SB = new();
 
         protected static GameObject SampleCreature = null;
@@ -171,6 +174,19 @@ namespace UD_BodyPlan_Selection.Mod
         private string _LongDescriptionNoOpenTKSummary;
         public string LongDescriptionNoOpenTKSummary => _LongDescriptionNoOpenTKSummary ??= GetLongDescription(Summary: true, IsTrueKin: true);
 
+
+        private bool? _HasIncompatibleWithCybernetics;
+        public bool HasIncompatibleWithCybernetics
+        {
+            get
+            {
+                if (Anatomy == null)
+                    return false;
+                
+                return _HasIncompatibleWithCybernetics ??= Anatomy.HasPartsIncompatibleWithCybernetics();
+            }
+        }
+
         public AnatomyChoice()
         {
             Anatomy = null;
@@ -207,17 +223,27 @@ namespace UD_BodyPlan_Selection.Mod
         }
 
         public override string ToString()
-            => $"{GetDescription(ShowDefault: true, ShowSymbols: true)}{(Renderable?.Tile is string tile ? " " + tile : null)}";
+            => $"{GetDescription(ShowDefault: true, ShowSymbols: true, IsTrueKin: true)}{(Renderable?.Tile is string tile ? " " + tile : null)}";
 
+        [OptionFlagUpdate]
         public void ClearLongDescriptionCaches()
         {
-            _LongDescription = null;
-            _LongDescriptionSummary = null;
-            _LongDescriptionTK = null;
-            _LongDescriptionTKSummary = null;
+            if (LastSortByCategoryValue == Options.SortByCategory)
+            {
+                _LongDescription = null;
+                _LongDescriptionSummary = null;
+                _LongDescriptionTK = null;
+                _LongDescriptionTKSummary = null;
+            }
+            else
+                LastSortByCategoryValue = Options.SortByCategory;
         }
 
-        public string GetDescription(bool ShowDefault = false, bool ShowSymbols = false)
+        public string GetDescription(
+            bool ShowDefault = false,
+            bool ShowSymbols = false,
+            bool IsTrueKin = false
+            )
         {
             SB.Clear();
 
@@ -229,11 +255,20 @@ namespace UD_BodyPlan_Selection.Mod
                     && IsDefault)
                     SB.Append(" (default)");
 
-                if (ShowSymbols
+                if (ShowSymbols)
+                {
+                    bool prependSpace = true;
+                    if (!AnatomyConfigurations.IsNullOrEmpty()
+                        && AnatomyConfigurations.HasSymbols())
+                    {
+                        prependSpace = false;
+                        SB.Append($" {AnatomyConfigurations.Symbols().Aggregate("", (a, n) => a + n)}");
+                    }
 
-                    && !AnatomyConfigurations.IsNullOrEmpty()
-                    && AnatomyConfigurations.HasSymbols())
-                    SB.Append($" {AnatomyConfigurations.Symbols().Aggregate("", (a, n) => a + n)}");
+                    if (IsTrueKin
+                        && HasIncompatibleWithCybernetics)
+                        SB.AppendNoCybernetics(prependSpace);
+                }
             }
 
             return SB.ToString();
@@ -505,7 +540,7 @@ namespace UD_BodyPlan_Selection.Mod
             {
                 string safeAnatomyName = Anatomy.Name.Replace("-", "_").Replace(" ", "_");
                 string tileKey = ChoiceRenderable.xTagPrefix + safeAnatomyName;
-                if (AnatomyConfigurations?.FirstTransformationOrDefault() is TransformationData xForm
+                if (AnatomyConfigurations?.FirstTransformationOrDefault() is AnatomyConfiguration.TransformationData xForm
                     && !xForm.Tile.IsNullOrEmpty()
                     && !xForm.DetailColor.IsNullOrEmpty())
                     Renderable = new(xForm, true);
