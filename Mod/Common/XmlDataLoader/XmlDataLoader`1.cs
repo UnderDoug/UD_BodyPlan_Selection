@@ -9,254 +9,84 @@ using static UD_BodyPlan_Selection.Mod.Const;
 
 namespace UD_BodyPlan_Selection.Mod.XML
 {
-    public partial class XmlDataLoader<T>
+    public class XmlDataLoader<T> : XmlDataLoader
         where T : IXmlLoaded<T>, new()
     {
-        public static Dictionary<string, List<string>> KnownAttributesByNodeName = new()
-        {
-            {
-                "symbol", new()
-                {
-                    "Name",
-                    "Color",
-                    "Value",
-                    "Load",
-                }
-            },
-            {
-                "textElement", new()
-                {
-                    "Name",
-                    "Symbol",
-                    "Load",
-                }
-            },
-            {
-                "shader", new()
-                {
-                    "Type",
-                    "Colors",
-                    "Color",
-                    "Load",
-                }
-            },
-            {
-                "tag", new()
-                {
-                    "Name",
-                    "Value",
-                }
-            },
-            { "base", new() },
-            {
-                "dynamic", new()
-                {
-                    "When",
-                    "Is",
-                    "Not",
-                    "Mixin",
-                }
-            },
-            {
-                "optionID", new()
-                {
-                    "Value",
-                }
-            },
-            {
-                "render", new()
-                {
-                    "DisplayName",
-                    "Tile",
-                    "RenderString",
-                    "ColorString",
-                    "TileColor",
-                    "DetailColor",
-                    "HFlip",
-                }
-            }
-        };
+        private Dictionary<string, XmlData<T>> RawNamedDataNodes;
 
-        public static Dictionary<string, List<string>> KnownChildNodesByNodeName = new()
-        {
-            {
-                "symbol", new()
-                {
-                    "color",
-                    "value",
-                }
-            },
-            {
-                "textElement", new()
-                {
-                    "descriptionBefore",
-                    "descriptionAfter",
-                    "summaryBefore",
-                    "summaryAfter",
-                    "symbol",
-                    "symbols",
-                }
-            },
-            {
-                "shader", new()
-                {
-                    "type",
-                    "colors",
-                    "color",
-                }
-            },
-            { "tag", new() },
-            { "base", new() },
-            { "dynamic", new() },
-            { "optionID", new() },
-            {
-                "render", new()
-                {
-                    "displayName",
-                    "tile",
-                    "renderString",
-                    "colorString",
-                    "tileColor",
-                    "detailColor",
-                    "hFlip",
-                }
-            }
-        };
+        protected T Instance;
 
-        protected static Action<object> HandleError;
-        protected static Action<object> HandleWarning;
+        protected XmlMetaData<T> MetaData => GetMetaData() as XmlMetaData<T>;
 
-        private T _Instance;
-        protected T Instance => _Instance ??= new T();
+        private int NameCounter;
 
-        protected XmlMetaData<T> MetaData => Instance?.XmlMetaData;
-
-        public IEnumerable<string> KnownChildNodes => MetaData?.GetKnownNodes();
-        public IEnumerable<string> KnownAttributes => MetaData?.GetKnownAttributes();
-
-        private Dictionary<string, Dictionary<string, XmlData>> RawNodes;
+        private string NextAnonymousName => $"{typeof(T).Name}{NameCounter++}";
 
         public XmlDataLoader()
+            : base()
         {
-            HandleError = Utils.ThisMod.Error;
-            HandleWarning = Utils.ThisMod.Warn;
-            RawNodes = new();
+            RawNamedDataNodes = new();
         }
 
-        protected void SetLoggers(ModInfo ModInfo)
-        {
-            if (ModInfo != Utils.ThisMod)
-            {
-                HandleError = ModInfo.Error;
-                HandleWarning = ModInfo.Warn;
-            }
-            else
-            {
-                HandleError = Utils.ThisMod.Error;
-                HandleWarning = Utils.ThisMod.Warn;
-            }
-        }
+        public override XmlMetaData GetMetaData()
+            => (Instance ??= new T()).XmlMetaData;
 
-        public void LoadXMLRootNodes()
-        {
-            HandleXMLStreamsWithRoot(XML_TEXTELEMENTS, RawNodes);
-            HandleXMLStreamsWithRoot(XML_BODYPLANS, RawNodes);
-        }
-
-        public void HandleXMLStreamsWithRoot(string Root, Dictionary<string, Dictionary<string, XmlData>> NodesByNodeName)
-        {
-            foreach (var reader in DataManager.YieldXMLStreamsWithRoot(Root))
-            {
-                SetLoggers(reader.modInfo);
-                try
-                {
-                    ReadRootXML(reader, Root, NodesByNodeName);
-                }
-                catch (Exception message)
-                {
-                    MetricsManager.LogPotentialModError(reader.modInfo, message);
-                }
-            }
-        }
-
-        public void ReadRootXML(
-            XmlDataHelper Reader,
-            string RootNode,
-            Dictionary<string, Dictionary<string, XmlData>> NodesByNodeName)
-        {
-            bool any = false;
-            try
-            {
-                Reader.WhitespaceHandling = WhitespaceHandling.None;
-                while (Reader.Read())
-                {
-                    if (Reader.Name == RootNode)
-                    {
-                        any = true;
-                        ReadRootNode(Reader, XML_BODYPLANS, NodesByNodeName);
-                    }
-                }
-            }
-            catch (Exception innerException)
-            {
-                throw new Exception($"{Reader.FileLinePos()}", innerException);
-            }
-            finally
-            {
-                Reader.Close();
-            }
-            if (!any)
-                HandleError($"No <{RootNode}> tag found in {Reader.SanitizedBaseURI()}");
-        }
-
-        public int ReadRootNode(XmlDataHelper Reader, string RootNode, Dictionary<string, Dictionary<string, XmlData>> NodesByNodeName)
+        public override int ReadRootNode(XmlDataHelper Reader, string RootNode)
         {
             int num = 0;
             while (Reader.Read())
             {
+                string nodeName = Reader.Name;
                 if (Reader.NodeType == XmlNodeType.Element)
                 {
-                    string nodeName = Reader.Name;
-                    if (!KnownChildNodesByNodeName.ContainsKey(nodeName))
-                        HandleWarning($"{Reader.FileLinePos()}, Unknown node '{Reader.Name}', may be skipped during bake");
+                    if (!MetaData.IsKnownNode(nodeName))
+                        HandleWarning($"{Reader.FileLinePos()}, Unknown node '{nodeName}', may be skipped during bake");
 
-                    if (!NodesByNodeName.ContainsKey(nodeName)
-                        || NodesByNodeName[nodeName].IsNullOrEmpty())
-                        NodesByNodeName.Add(nodeName, new());
-
-                    num += ReadNode(Reader, NodesByNodeName[nodeName]);
+                    num += ReadDataNode(Reader);
                     continue;
                 }
 
                 if (Reader.NodeType != XmlNodeType.Comment)
                 {
-                    if (Reader.Name == RootNode
+                    if (nodeName == RootNode
                         && Reader.NodeType == XmlNodeType.EndElement)
                         return num;
 
-                    throw new Exception($"{Reader.FileLinePos()}, Unknown node '{Reader.Name}'");
+                    throw new Exception($"{Reader.FileLinePos()}, Unknown node '{nodeName}'");
                 }
             }
+            NameCounter = 0;
             return num;
         }
-        public int ReadNode(XmlDataHelper Reader, Dictionary<string, XmlData> Nodes)
-        {
-            string nodeName = Reader.Name;
-            var xMLData = AbstractXmlNode.ReadNode<XmlData>(Reader);
-            string name = xMLData.Name;
 
-            if (xMLData.Load > AbstractXmlNode.LoadType.Replace)
+        public override int ReadDataNode(XmlDataHelper Reader)
+        {
+            if (ReadXmlDataNode<T>(Reader) is not XmlData<T> xmlData)
+                return 0;
+
+            string nodeName = Reader.Name;
+
+            if (MetaData.IsNamed)
             {
-                if (Nodes.TryGetValue(name, out var existingNode))
-                    existingNode.Merge(xMLData);
+                string name = xmlData.Name;
+                if (xmlData.Load > XmlNode<T>.LoadType.Replace)
+                {
+                    if (RawNamedDataNodes.TryGetValue(name, out var existingNode))
+                        existingNode.Merge(xmlData);
+                    else
+                    if (xmlData.Load == XmlNode<T>.LoadType.Merge)
+                        HandleError($"{Reader.FileLinePos()}, Attempt to merge with {name} which is an unknown {nodeName}, node discarded");
+                }
                 else
-                if (xMLData.Load == AbstractXmlNode.LoadType.Merge)
-                    HandleError($"{Reader.FileLinePos()}, Attempt to merge with {name} which is an unknown {nodeName}, node discarded");
+                    RawNamedDataNodes[xmlData.Name] = xmlData;
             }
             else
-                Nodes[xMLData.Name] = xMLData;
+                RawNamedDataNodes.Add(NextAnonymousName,xmlData);
 
             return 1;
         }
+
+        public Dictionary<string, XmlData<T>> GetRawNodes()
+            => new(RawNamedDataNodes);
     }
 }

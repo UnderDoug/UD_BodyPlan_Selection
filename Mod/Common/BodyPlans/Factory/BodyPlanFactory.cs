@@ -10,6 +10,7 @@ using static UD_BodyPlan_Selection.Mod.BodyPlans.TextElement;
 using XRL.UI;
 using UD_BodyPlan_Selection.Mod.XML;
 using static UD_BodyPlan_Selection.Mod.BodyPlans.BodyPlanCategory;
+using System.Linq;
 
 namespace UD_BodyPlan_Selection.Mod.BodyPlans
 {
@@ -22,38 +23,44 @@ namespace UD_BodyPlan_Selection.Mod.BodyPlans
         , IXmlFactory<BodyPlanRenderable>
         , IXmlFactory<TransformationData>
     {
-        protected Dictionary<string, Action<XmlDataHelper>> TextElementsRootNode;
-        protected Dictionary<string, Action<XmlDataHelper>> TextElementsNodeChildren;
-        protected Dictionary<string, Action<XmlDataHelper>> BodyPlansRootNode;
-        protected Dictionary<string, Action<XmlDataHelper>> BodyPlansNodeChildren;
-
-        [ModSensitiveStaticCache]
-        private static bool Initialized = false;
-
-        [ModSensitiveStaticCache]
-        private static Dictionary<string, Symbol> _SymbolsByName;
-        public static Dictionary<string, Symbol> SymbolsByName
+        public Dictionary<string, Symbol> SymbolsByName;
+        Dictionary<string, Symbol> IXmlFactory<Symbol>.EntriesByName
         {
-            get
-            {
-                if (_SymbolsByName.IsNullOrEmpty())
-                    LogCacheInitError(nameof(SymbolsByName));
+            get => SymbolsByName;
+            set => SymbolsByName = value;
+        }
+        public List<Symbol> Symbols => SymbolsByName?.Values?.ToList();
 
-                return _SymbolsByName;
-            }
+        public Dictionary<string, BodyPlanCategory> CategoriesByName;
+        Dictionary<string, BodyPlanCategory> IXmlFactory<BodyPlanCategory>.EntriesByName
+        {
+            get => CategoriesByName;
+            set => CategoriesByName = value;
+        }
+        public List<BodyPlanCategory> Categories => CategoriesByName?.Values?.ToList();
+
+        Dictionary<string, TextShader> IXmlFactory<TextShader>.EntriesByName
+        {
+            get => throw new NotImplementedException();
+            set => throw new NotImplementedException();
         }
 
-        [ModSensitiveStaticCache]
-        private static Dictionary<string, BodyPlanEntry> _EntriesByID;
-        public static Dictionary<string, BodyPlanEntry> EntriesByID
+        Dictionary<string, BodyPlanEntry> IXmlFactory<BodyPlanEntry>.EntriesByName
         {
-            get
-            {
-                if (_EntriesByID.IsNullOrEmpty())
-                    LogCacheInitError(nameof(EntriesByID));
+            get => throw new NotImplementedException();
+            set => throw new NotImplementedException();
+        }
 
-                return _EntriesByID;
-            }
+        Dictionary<string, BodyPlanRenderable> IXmlFactory<BodyPlanRenderable>.EntriesByName
+        {
+            get => throw new NotImplementedException();
+            set => throw new NotImplementedException();
+        }
+
+        Dictionary<string, TransformationData> IXmlFactory<TransformationData>.EntriesByName
+        {
+            get => throw new NotImplementedException();
+            set => throw new NotImplementedException();
         }
 
         private static BodyPlanFactory _Factory;
@@ -71,204 +78,94 @@ namespace UD_BodyPlan_Selection.Mod.BodyPlans
             }
         }
 
-        public BodyPlanFactory()
-        {
-            TextElementsRootNode = new()
-            {
-                { "cybp_textElements", HandleTextElementsNode },
-            };
-            TextElementsNodeChildren = new()
-            {
-                { "symbol", HandleTextElementsSymbolNode },
-                { "textElement", HandleTextElementNode },
-            };
-            BodyPlansRootNode = new()
-            {
-                { "cybp_bodyplans", HandleBodyPlansNode },
-            };
-            BodyPlansNodeChildren = new()
-            {
-                { "category", HandleBodyPlansCategoryNode },
-                { "bodyplan", HandleBodyPlanNode },
-            };
-        }
-
-        private static void LogError(object Message)
-            => MetricsManager.LogCallingModError(Message);
-
-        private static void LogCacheInitError(string CacheName)
-        {
-            string reason = Initialized
-                ? "initialized incorrectly"
-                : "not initialized";
-            LogError($"{CacheName} empty or null, {nameof(BodyPlanFactory)} {reason}");
-        }
-
-        private static void LogException(string MethodName, Exception x)
-            => LogError($"{nameof(BodyPlanFactory)}.{MethodName} {x}");
-
         public void LoadTextElements()
         {
-            try
-            {
-                _EntriesByID = new();
-                foreach (var xml in DataManager.YieldXMLStreamsWithRoot(XML_TEXTELEMENTS))
-                {
-
-                }
-            }
-            catch (Exception x)
-            {
-                LogException(nameof(LoadTextElements), x);
-            }
+            Utils.ThisMod.Error(new NotImplementedException($"Custom parsing of TextElement is yet to be implemented."));
         }
 
         public void LoadBodyPlans()
         {
-            try
-            {
-                _EntriesByID = new();
-                foreach (var xml in DataManager.YieldXMLStreamsWithRoot(XML_BODYPLANS))
-                {
-
-                }
-            }
-            catch (Exception x)
-            {
-                LogException(nameof(LoadBodyPlans), x);
-            }
+            Utils.ThisMod.Error(new NotImplementedException($"Custom parsing of BodyPlanEntry is yet to be implemented."));
         }
 
-        public void HandleTextElementsNode(XmlDataHelper xml)
-            => xml.HandleNodes(TextElementsNodeChildren)
-            ;
-        public void HandleBodyPlansNode(XmlDataHelper xml)
-            => xml.HandleNodes(BodyPlansNodeChildren)
-            ;
+        protected string LoadFromDataSignature<T>()
+            where T : IXmlLoaded<T>, new()
+            => $"{nameof(BodyPlanFactory)}.{nameof(LoadFromData)}({nameof(XmlDataLoader.XmlData<T>)})";
 
-        public void HandleTextElementsSymbolNode(XmlDataHelper xml)
+        protected string LoadFromDataMissingNode<T>(string NodeName)
+            where T : IXmlLoaded<T>, new()
+            => $"{LoadFromDataSignature<Symbol>()} attempted to load {typeof(T).Name} without '{NodeName}'";
+
+        public Symbol LoadFromData(XmlDataLoader.XmlData<Symbol> XmlData)
         {
-            string text = xml.ParseAttribute<string>("Name", null, required: true);
-            if (text.StartsWith('-'))
+            var attributes = XmlData.Attributes ?? new Dictionary<string, string>();
+
+            if (!char.TryParse(attributes.GetValue(nameof(Symbol.Color)), out char color))
+                char.TryParse(XmlData.GetNamedChildNode(nameof(color))?.TextLines?[0]?.Trim(), out color);
+
+            if (!char.TryParse(attributes.GetValue(nameof(Symbol.Value)), out char value)
+                && (XmlData.GetNamedChildNode(nameof(color))?.TextLines?[0]?.Trim() is not string valueString
+                    || !char.TryParse(Sidebar.ToCP437(valueString), out value)))
             {
-                text = text.TrimStart('-');
-                MetricsManager.LogPotentialModError(xml.modInfo, DataManager.SanitizePathForDisplay(xml.BaseURI) + ":" + xml.LineNumber + ": Entry removal discontinued, set Hidden attribute instead.");
+                XmlData.Mod.Error($"{LoadFromDataMissingNode<Symbol>(nameof(Symbol.Value))}");
+                return default;
             }
-            if (!SkillList.TryGetValue(text, out NewSkill))
-            {
-                NewSkill = new SkillEntry
-                {
-                    Name = text,
-                    Cost = -999
-                };
-                SkillList.Add(text, NewSkill);
-            }
-            NewSkill.HandleXMLNode(xml);
-            xml.HandleNodes(skillNodeChildren);
-            NewSkill = null;
+
+            return new(XmlData.Name, color, value);
         }
 
-        public void HandleTextElementNode(XmlDataHelper reader)
-        {
-            string text = reader.ParseAttribute<string>("Name", null, required: true);
-            if (text.StartsWith('-'))
-            {
-                text = text.TrimStart('-');
-                MetricsManager.LogPotentialModError(reader.modInfo, DataManager.SanitizePathForDisplay(reader.BaseURI) + ":" + reader.LineNumber + ": Entry removal discontinued, set Hidden attribute instead.");
-            }
-            if (!SkillList.TryGetValue(text, out NewSkill))
-            {
-                NewSkill = new SkillEntry
-                {
-                    Name = text,
-                    Cost = -999
-                };
-                SkillList.Add(text, NewSkill);
-            }
-            NewSkill.HandleXMLNode(reader);
-            reader.HandleNodes(skillNodeChildren);
-            NewSkill = null;
-        }
-
-        public void HandleBodyPlansCategoryNode(XmlDataHelper reader)
-        {
-            string text = reader.ParseAttribute<string>("Name", null, required: true);
-            if (text.StartsWith('-'))
-            {
-                text = text.TrimStart('-');
-                MetricsManager.LogPotentialModError(reader.modInfo, DataManager.SanitizePathForDisplay(reader.BaseURI) + ":" + reader.LineNumber + ": Entry removal discontinued, set Hidden attribute instead.");
-            }
-            if (!SkillList.TryGetValue(text, out NewSkill))
-            {
-                NewSkill = new SkillEntry
-                {
-                    Name = text,
-                    Cost = -999
-                };
-                SkillList.Add(text, NewSkill);
-            }
-            NewSkill.HandleXMLNode(reader);
-            reader.HandleNodes(skillNodeChildren);
-            NewSkill = null;
-        }
-
-        public void HandleBodyPlanNode(XmlDataHelper reader)
-        {
-            string text = reader.ParseAttribute<string>("Name", null, required: true);
-            if (text.StartsWith('-'))
-            {
-                text = text.TrimStart('-');
-                MetricsManager.LogPotentialModError(reader.modInfo, DataManager.SanitizePathForDisplay(reader.BaseURI) + ":" + reader.LineNumber + ": Entry removal discontinued, set Hidden attribute instead.");
-            }
-            if (!SkillList.TryGetValue(text, out NewSkill))
-            {
-                NewSkill = new SkillEntry
-                {
-                    Name = text,
-                    Cost = -999
-                };
-                SkillList.Add(text, NewSkill);
-            }
-            NewSkill.HandleXMLNode(reader);
-            reader.HandleNodes(skillNodeChildren);
-            NewSkill = null;
-        }
-
-        public Symbol LoadFromData(XmlDataLoader<Symbol>.XmlData XmlData)
+        public BodyPlanCategory LoadFromData(XmlDataLoader.XmlData<BodyPlanCategory> XmlData)
         {
             throw new NotImplementedException();
         }
 
-        public BodyPlanCategory LoadFromData(XmlDataLoader<BodyPlanCategory>.XmlData XmlData)
+        public TextShader LoadFromData(XmlDataLoader.XmlData<TextShader> XmlData)
         {
             throw new NotImplementedException();
         }
 
-        public TextShader LoadFromData(XmlDataLoader<TextShader>.XmlData XmlData)
+        public BodyPlanEntry LoadFromData(XmlDataLoader.XmlData<BodyPlanEntry> XmlData)
+        {
+            throw new NotImplementedException();
+        }
+        public BodyPlanRenderable LoadFromData(XmlDataLoader.XmlData<BodyPlanRenderable> XmlData)
         {
             throw new NotImplementedException();
         }
 
-        public BodyPlanEntry LoadFromData(XmlDataLoader<BodyPlanEntry>.XmlData XmlData)
-        {
-            throw new NotImplementedException();
-        }
-        public BodyPlanRenderable LoadFromData(XmlDataLoader<BodyPlanRenderable>.XmlData XmlData)
+        public TransformationData LoadFromData(XmlDataLoader.XmlData<TransformationData> XmlData)
         {
             throw new NotImplementedException();
         }
 
-        public TransformationData LoadFromData(XmlDataLoader<TransformationData>.XmlData XmlData)
-        {
-            throw new NotImplementedException();
-        }
+        private XmlDataLoader<T> GetXmlDataLoaderInternal<T>()
+            where T : IXmlLoaded<T>, new()
+            => new();
 
-        public XmlDataLoader<Symbol> GetXmlDataLoader()
-        {
-            throw new NotImplementedException();
-        }
+        XmlDataLoader<Symbol> IXmlFactory<Symbol>.GetXmlDataLoader()
+            => GetXmlDataLoaderInternal<Symbol>();
 
         XmlDataLoader<BodyPlanCategory> IXmlFactory<BodyPlanCategory>.GetXmlDataLoader()
+            => GetXmlDataLoaderInternal<BodyPlanCategory>();
+
+        XmlDataLoader<TextShader> IXmlFactory<TextShader>.GetXmlDataLoader()
+            => GetXmlDataLoaderInternal<TextShader>();
+
+        XmlDataLoader<BodyPlanEntry> IXmlFactory<BodyPlanEntry>.GetXmlDataLoader()
+            => GetXmlDataLoaderInternal<BodyPlanEntry>();
+
+        XmlDataLoader<BodyPlanRenderable> IXmlFactory<BodyPlanRenderable>.GetXmlDataLoader()
+            => GetXmlDataLoaderInternal<BodyPlanRenderable>();
+
+        XmlDataLoader<TransformationData> IXmlFactory<TransformationData>.GetXmlDataLoader()
+            => GetXmlDataLoaderInternal<TransformationData>();
+
+        Symbol IXmlFactory<Symbol>.LoadFromData(XmlDataLoader.XmlData<Symbol> XmlData)
+        {
+            throw new NotImplementedException();
+        }
+
+        BodyPlanCategory IXmlFactory<BodyPlanCategory>.LoadFromData(XmlDataLoader.XmlData<BodyPlanCategory> XmlData)
         {
             throw new NotImplementedException();
         }

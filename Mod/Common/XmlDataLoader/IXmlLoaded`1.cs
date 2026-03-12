@@ -13,10 +13,10 @@ namespace UD_BodyPlan_Selection.Mod.XML
 
         XmlMetaData<T> XmlMetaData { get; }
 
-        XmlDataLoader<T>.XmlData LoadData(XmlDataHelper Reader)
-            => XmlDataLoader<T>.XmlNode.ReadNode(Reader, Factory.GetXmlDataLoader()) as XmlDataLoader<T>.XmlData;
+        XmlDataLoader.XmlData<T> ReadXmlDataNode(XmlDataHelper Reader)
+            => Factory.GetXmlDataLoader().ReadXmlDataNode<T>(Reader);
 
-        XmlDataLoader<T>.XmlNode LoadChild(XmlDataHelper Reader)
-            => XmlDataLoader<T>.XmlNode.ReadNode(Reader, Factory.GetXmlDataLoader());
+        XmlDataLoader.XmlNode ReadXmlNode(XmlDataHelper Reader)
+            => Factory.GetXmlDataLoader().ReadXmlNode<T>(Reader);
     }
 }

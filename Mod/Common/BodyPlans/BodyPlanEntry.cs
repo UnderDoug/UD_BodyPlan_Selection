@@ -4,6 +4,8 @@ using System.Text;
 
 using UD_BodyPlan_Selection.Mod.XML;
 
+using XRL;
+
 namespace UD_BodyPlan_Selection.Mod.BodyPlans
 {
     public class BodyPlanEntry : IXmlLoaded<BodyPlanEntry>
@@ -32,8 +34,11 @@ namespace UD_BodyPlan_Selection.Mod.BodyPlans
             },
             XmlLoadedNodes = new()
             {
-                { "render", typeof(BodyPlanRenderable) },
-                { "transformation", typeof(TransformationData) },
+                { "render", delegate (XmlDataHelper Reader)
+                    {
+                        return IXmlLoaded<BodyPlanRenderable>.ReadXmlNode(Reader);
+                    } },
+                { "transformation", IXmlLoaded<TransformationData>.ReadXmlNode },
             },
             IsInheritable = true,
             IsMergable = true,

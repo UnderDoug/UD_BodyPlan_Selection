@@ -11,10 +11,10 @@ using static UD_BodyPlan_Selection.Mod.BodyPlans.TextElement;
 
 namespace UD_BodyPlan_Selection.Mod.XML
 {
-    public partial class XmlDataLoader<T>
-        where T : IXmlLoaded<T>, new()
+    public abstract partial class XmlDataLoader
     {
-        public class XmlNode : AbstractXmlNode
+        public class XmlNode<T> : XmlNode
+            where T : IXmlLoaded<T>, new()
         {
             public enum LoadType
             {
@@ -23,14 +23,17 @@ namespace UD_BodyPlan_Selection.Mod.XML
                 Merge,
             }
 
-            protected XmlDataLoader<T> Loader;
-
             public string Name;
             public LoadType Load;
 
-            private T Instance;
+
+            private T _Instance;
+            protected T Instance => _Instance ??= new T();
 
             protected XmlMetaData<T> MetaData => Instance?.XmlMetaData;
+
+            public IEnumerable<string> KnownChildNodes => MetaData?.GetKnownNodes();
+            public IEnumerable<string> KnownAttributes => MetaData?.GetKnownAttributes();
 
             public bool IsUnique => MetaData?.IsUnique ?? false;
 
@@ -42,38 +45,35 @@ namespace UD_BodyPlan_Selection.Mod.XML
                 Attributes = new();
             }
 
-            public XmlNode(XmlDataLoader<T> Loader)
+            public XmlNode(XmlDataLoader Loader)
                 : this()
             { }
 
-            protected XmlNode(XmlDataHelper Reader, XmlDataLoader<T> Loader)
-                : this(Loader)
+            protected XmlNode(XmlDataHelper Reader)
+                : this()
             {
                 NodeName = Reader.Name;
                 ReadNodeInternal(Reader);
             }
-            protected XmlNode(XmlNode Source, XmlDataLoader<T> Loader)
-                : this(Loader)
+            protected XmlNode(XmlNode<T> Source)
+                : base(Source)
             {
-                NodeName = Source.NodeName;
                 Name = Source.Name;
                 Load = Source.Load;
-                Children = new(Source.Children);
-                Attributes = new(Source.Attributes);
             }
 
-            public static TNode ReadNode<TNode>(XmlDataHelper Reader, XmlDataLoader<T> Loader)
+            public static TNode ReadNode<TNode>(XmlDataHelper Reader)
                 where TNode : XmlNode, new()
                 => ReadNode(
-                    Node: new TNode() 
+                    Node: new TNode()
                     {
                         NodeName = Reader.Name
 
                     },
                     Reader) as TNode;
 
-            public static XmlNode ReadNode(XmlDataHelper Reader, XmlDataLoader<T> Loader)
-                => ReadNode<XmlNode>(Reader, Loader);
+            public static XmlNode ReadNode(XmlDataHelper Reader)
+                => ReadNode<XmlNode<T>>(Reader);
 
             public override void AssignFromAttributesByName(XmlDataHelper Reader)
             {
@@ -121,7 +121,7 @@ namespace UD_BodyPlan_Selection.Mod.XML
                 return base.HandleNodeTypeComment(Reader);
             }
 
-            public override bool SameAs(AbstractXmlNode Other)
+            public override bool SameAs(XmlNode Other)
             {
                 if (Other is not XmlNode<T> typedNode)
                     return false;
@@ -150,7 +150,7 @@ namespace UD_BodyPlan_Selection.Mod.XML
                 base.AddChild(ChildNode);
             }
 
-            public override void Merge(AbstractXmlNode Other)
+            public override void Merge(XmlNode Other)
             {
                 if (Other is not XmlNode<T> typedOther)
                     HandleError($"Attempted to merge {GetType().Name} with incompatible {Other.GetType().Name}");
@@ -169,7 +169,7 @@ namespace UD_BodyPlan_Selection.Mod.XML
                 base.Merge(Other);
             }
 
-            public override AbstractXmlNode Clone()
+            public override XmlNode Clone()
             {
                 var clone = Activator.CreateInstance(GetType()) as XmlNode<T>;
 

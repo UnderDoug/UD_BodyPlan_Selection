@@ -8,10 +8,10 @@ using XRL.Collections;
 
 namespace UD_BodyPlan_Selection.Mod.XML
 {
-    public partial class XmlDataLoader<T>
-        where T : IXmlLoaded<T>, new()
+    public abstract partial class XmlDataLoader
     {
-        public class XmlData : XmlNode
+        public class XmlData<T> : XmlNode<T>
+            where T : IXmlLoaded<T>, new()
         {
             public string Inherits;
 
@@ -28,15 +28,15 @@ namespace UD_BodyPlan_Selection.Mod.XML
             {
                 if (base.HandleNodeTypeElement(Reader))
                 {
-                    AddChild(ReadNode<XmlNode>(Reader));
+                    AddChild(ReadNode<XmlNode<T>>(Reader));
                     return true;
                 }
                 return false;
             }
 
-            public override void Merge(AbstractXmlNode Other)
+            public override void Merge(XmlNode Other)
             {
-                if (Other is not XmlData other)
+                if (Other is not XmlData<T> other)
                     HandleError($"Attempted to merge {GetType().Name} with incompatible {Other.GetType().Name}");
                 else
                 {
@@ -55,15 +55,27 @@ namespace UD_BodyPlan_Selection.Mod.XML
                 base.Merge(Other);
             }
 
-            public override AbstractXmlNode Clone()
+            public override XmlNode Clone()
             {
-                var clone = base.Clone() as XmlData;
+                var clone = base.Clone() as XmlData<T>;
 
                 clone.Mod = Mod;
                 clone.Inherits = Inherits;
 
                 return clone;
             }
+
+            public XmlNode<T> GetNamedChildNode(string Name)
+            {
+                foreach (var childNode in GetNamedChildNodes())
+                    if (childNode.Name == Name)
+                        return childNode;
+
+                return null;
+            }
+
+            public bool TryGetNamedChildNode(string Name, out XmlNode<T> ChildNode)
+                => (ChildNode = GetNamedChildNode(Name)) != null;
         }
     }
 }
