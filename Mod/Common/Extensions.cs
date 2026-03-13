@@ -13,6 +13,7 @@ using XRL.World.Parts;
 using static UD_BodyPlan_Selection.Mod.Utils;
 using static UD_BodyPlan_Selection.Mod.Const;
 using System.Collections.Concurrent;
+using XRL.Collections;
 
 namespace UD_BodyPlan_Selection.Mod
 {
@@ -213,9 +214,78 @@ namespace UD_BodyPlan_Selection.Mod
             UnityEngine.Debug.Log(Value);
             return Writer;
         }
+        public static StreamWriter WriteLine2If(this StreamWriter Writer, bool Condition, string Value, int Indent = 0)
+        {
+            if (Condition)
+                Writer.WriteLine2(Value, Indent);
+
+            return Writer;
+        }
 
         public static StreamWriter WriteLine4(this StreamWriter Writer, string Value, int Indent = 0)
             => Writer.WriteLine2(Value, Indent * 2)
+            ;
+
+        public static StringBuilder AppendAttribute(this StringBuilder SB, KeyValuePair<string, object> Attribute, string After = null)
+            => SB.Append(Attribute.Key).Append("=\"").Append(Attribute.Value).Append("\"").Append(After);
+
+        public static StreamWriter WriteNode(
+            this StreamWriter Writer,
+            string Node,
+            Dictionary<string, object> Attributes,
+            bool AutoClose = true,
+            int Indent = 0
+            )
+        {
+            if (Attributes.IsNullOrEmpty())
+                return Writer;
+
+            var sB = Event.NewStringBuilder($"<{Node} ");
+            using var attributes = ScopeDisposedList<KeyValuePair<string, object>>.GetFromPoolFilledWith(Attributes);
+            int count = attributes.Count();
+            for (int i = 0; i < count; i++)
+            {
+                bool space = !AutoClose && i == count - 1;
+                sB.AppendAttribute(attributes[i], space ? " " : null);
+            }
+
+            if (AutoClose)
+                sB.Append("/>");
+            else
+                sB.Append($"></{Node}>");
+
+            return Writer.WriteLine2(
+                Value: Event.FinalizeString(sB),
+                Indent: Indent);
+        }
+
+        public static StreamWriter WriteAnatomyTileObjectBlueprint(
+            this StreamWriter Writer,
+            string NamePrefix,
+            string AnatomyName,
+            string Inherits,
+            Dictionary<string, object> Attributes,
+            bool IncludeName = true,
+            string BasedOnBlueprint = null,
+            int Indent = 0
+            )
+            => Writer.WriteLine2(
+                    Value: $"<object Name=\"{NamePrefix} {AnatomyName}\" Inherits=\"{Inherits}\" >",
+                    Indent: Indent)
+                .WriteLine2(
+                    Value: $"<tag Name=\"Anatomy\" Value=\"{AnatomyName}\" />",
+                    Indent: Indent + 1)
+                .WriteLine2If(
+                    Condition: IncludeName,
+                    Value: $"<tag Name=\"BasedOnBlueprint\" Value=\"{BasedOnBlueprint}\" />",
+                    Indent: Indent + 1)
+                .WriteNode(
+                    Node: "part",
+                    Attributes: Attributes,
+                    Indent: Indent + 1)
+                .WriteLine2(
+                    Value: "</object>",
+                    Indent: Indent)
             ;
 
         public static int GetPartDepth(this BodyPart BodyPart)
@@ -371,8 +441,6 @@ namespace UD_BodyPlan_Selection.Mod
                 || String.IsColor()
             ? String
             : null;
-
-
 
         public static bool TryGetTagValueForData(this GameObjectBlueprint DataBucket, string TagName, out string Value)
         {

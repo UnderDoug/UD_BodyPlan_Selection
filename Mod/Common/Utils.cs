@@ -7,8 +7,11 @@ using System.Text.RegularExpressions;
 
 using ConsoleLib.Console;
 
+using Qud.UI;
+
 using XRL;
 using XRL.Collections;
+using XRL.UI;
 using XRL.Wish;
 using XRL.World;
 using XRL.World.Anatomy;
@@ -49,7 +52,7 @@ namespace UD_BodyPlan_Selection.Mod
         }
 
         public static string GetTile(GameObjectBlueprint Blueprint)
-            => Blueprint.GetPartParameter<string>(nameof(Render), nameof(Render.Tile))
+            => Blueprint.GetRenderable()?.Tile
             ;
         public static string GetAnatomyName(GameObjectBlueprint Blueprint)
             => Blueprint.GetPartParameter<string>(nameof(Body), nameof(Body.Anatomy))
@@ -224,89 +227,193 @@ namespace UD_BodyPlan_Selection.Mod
         [WishCommand(Command = "UD_CYBP anatomy tile tags")]
         public static bool AnatomyTileTags_WishHandler(string Parameters)
         {
-            bool IncludeName = Parameters?.Contains("with names") ?? false;
-            string forAnatomy = Regex.Replace(Parameters, @" ?\@(\w.?) ?", @"$1");
-            if (!AnatomyChoices.IsNullOrEmpty()
-                && new StreamWriter(UD_CYBP_Output) is StreamWriter writer)
+            if (Popup.ShowYesNo("Include blueprint names in output file?") is DialogResult result
+                && result != DialogResult.Cancel)
             {
-                using (var anatomyChoices = ScopeDisposedList<AnatomyChoice>.GetFromPoolFilledWith(AnatomyChoices))
+                bool IncludeName = result == DialogResult.Yes;
+
+                string forAnatomy = null;
+                using var options = ScopeDisposedList<string>.GetFromPool();
+                options.Add("All");
+                using var hotkeys = ScopeDisposedList<char>.GetFromPool();
+                hotkeys.Add('\0');
+                foreach (var anatomy in Anatomies.AnatomyList)
                 {
-                    Log("-".ThisManyTimes(25));
-                    writer.WriteLine2("<?xml version=\"1.0\" encoding=\"utf-8\" ?>")
-                        .WriteLine2("<objects>")
-                            .WriteLine2("<object Name=\"UD_CYBP_AnatomyTiles\" Load=\"Merge\" >", Indent: 1);
-                    var sB = Event.NewStringBuilder();
-                    var attributes = new Dictionary<string, object>();
-                    for (int i = 0; i < anatomyChoices.Count; i++)
-                        if (anatomyChoices[i]?.Anatomy is Anatomy anatomy)
+                    options.Add(anatomy.Name);
+                    hotkeys.Add('\0');
+                }
+
+                Popup.PickOption(
+                    Title: "For which anatomy?",
+                    Options: options,
+                    Hotkeys: hotkeys,
+                    OnResult: i =>
+                    {
+                        if (i > 0) forAnatomy = Anatomies.AnatomyList[i - 1]?.Name;
+                    },
+                    AllowEscape: true);
+
+                var prefixResult = DialogResult.No;
+                string modPrefix = "";
+                string namePrefix = "";
+                do
+                {
+                    modPrefix = Popup.AskString(
+                        Message: "Enter you mod prefix (leave blank for none, escape to cancel)",
+                        Default: modPrefix,
+                        ReturnNullForEscape: true);
+
+                    if (modPrefix == null)
+                        return false;
+
+                    namePrefix = "UD_CYBP_AnatomyTile";
+
+                    if (!modPrefix.IsNullOrEmpty())
+                        namePrefix = $"{modPrefix}_{namePrefix}";
+
+                    Popup.WaitNewPopupMessage(
+                        message: $"Object blueprints will follow this naming convention: \"{namePrefix} AnatomyName\".", 
+                        buttons: new List<QudMenuItem>()
                         {
-                            if (!forAnatomy.IsNullOrEmpty()
-                                && anatomy.Name.Replace("-", "_").Replace(" ", "_") != forAnatomy)
-                                continue;
-
-                            if (i > 0)
-                                writer.WriteLine2("");
-                            
-                            if (anatomyChoices[i].GetExampleBlueprints().ToList() is List<GameObjectBlueprint> blueprints
-                                && !blueprints.IsNullOrEmpty())
+                            new()
                             {
-                                int count = blueprints.Count();
-                                for (int j = 0; j < count; j++)
-                                    if (blueprints[j] is GameObjectBlueprint blueprint
-                                        && blueprint.GetRenderable() is Renderable renderable)
-                                    {
-                                        if (renderable?.Tile is string tile)
-                                            attributes[nameof(renderable.Tile)] = tile;
+                                text = ControlManager.getCommandInputFormatted("Accept") + " {{y|Proceed}}",
+                                command = "Yes",
+                                hotkey = "Y,Accept"
+                            },
+                            new()
+                            {
+                                text = ControlManager.getCommandInputFormatted("V Negative") + " {{y|Re-enter}}",
+                                command = "No",
+                                hotkey = "N,V Negative"
+                            },
+                            new()
+                            {
+                                text = "{{W|" + ControlManager.getCommandInputDescription("Cancel", XRL.UI.Options.ModernUI) + " Cancel}}",
+                                command = "Cancel",
+                                hotkey = "Cancel"
+                            }
+                        },
+                        callback: delegate (QudMenuItem i)
+                        {
+                            if (i.command == "No")
+                                prefixResult = DialogResult.No;
 
-                                        if (renderable?.RenderString is string renderString)
-                                            attributes[nameof(renderable.RenderString)] = renderString;
+                            if (i.command == "Yes")
+                                prefixResult = DialogResult.Yes;
 
-                                        if (renderable?.ColorString is string colorString)
-                                            attributes[nameof(renderable.ColorString)] = colorString;
+                            if (i.command == "Cancel")
+                                prefixResult = DialogResult.Cancel;
+                        });
 
-                                        if (renderable?.TileColor is string tileColor)
-                                            attributes[nameof(renderable.TileColor)] = tileColor;
+                    if (prefixResult == DialogResult.Cancel)
+                        return false;
+                }
+                while (prefixResult != DialogResult.Yes);
 
-                                        if (renderable?.DetailColor is char detailColor)
-                                            attributes[nameof(renderable.DetailColor)] = detailColor;
+                if (modPrefix == "")
+                    modPrefix = null;
 
-                                        if (!attributes.IsNullOrEmpty())
+                if (Popup.ShowYesNo("There are literal thousands of eligible blueprints.\n\n" +
+                    "If you haven't selected a specific anatomy, this operation may take some time, " +
+                    "and the resultant file will be quite long.\n\n" +
+                    "Picking specific objects out into a separate file is recommended.\n\nAre you sure?") != DialogResult.Yes)
+                    return false;
+
+                string inherits = Const.TILES_BLUEPRINT;
+                if (new StreamWriter($"{forAnatomy}{UD_CYBP_Output}") is StreamWriter writer)
+                {
+                    using (var anatomyChoices = ScopeDisposedList<AnatomyChoice>.GetFromPoolFilledWith(AnatomyChoices))
+                    {
+                        Log("-".ThisManyTimes(25));
+                        writer.WriteLine2("<?xml version=\"1.0\" encoding=\"utf-8\" ?>")
+                            .WriteLine2("<objects>");
+
+                        var attributes = new Dictionary<string, object>();
+                        for (int i = 0; i < anatomyChoices.Count; i++)
+                        {
+                            if (anatomyChoices[i]?.Anatomy is Anatomy anatomy)
+                            {
+                                if (!forAnatomy.IsNullOrEmpty()
+                                    && anatomy.Name != forAnatomy)
+                                    continue;
+
+                                if (i > 0)
+                                    writer.WriteLine2("");
+
+                                writer.WriteLine2($"<!-- {anatomy.Name} -->", Indent: 1);
+
+                                if (anatomyChoices[i].GetExampleBlueprints().ToList() is List<GameObjectBlueprint> blueprints
+                                    && !blueprints.IsNullOrEmpty())
+                                {
+                                    int count = blueprints.Count();
+                                    for (int j = 0; j < count; j++)
+                                    { 
+                                        if (blueprints[j] is GameObjectBlueprint blueprint
+                                            && blueprint.GetRenderable() is Renderable renderable)
                                         {
-                                            sB.Append($"<!--xtagUD_CYBP_{anatomy.Name.Replace("-", "_").Replace(" ", "_")} ");
+                                            attributes[nameof(IPart.Name)] = nameof(Render);
 
-                                            if (IncludeName)
-                                                sB.Append($"Blueprint=\"{blueprint.Name}\" ");
+                                            if (renderable?.Tile is string tile)
+                                                attributes[nameof(renderable.Tile)] = tile;
 
-                                            foreach ((string attribute, object value) in attributes)
-                                                sB.Append($"{attribute}=\"{value}\" ");
+                                            if (renderable?.RenderString is string renderString)
+                                                attributes[nameof(renderable.RenderString)] = renderString;
 
-                                            sB.Append($"/-->");
+                                            if (renderable?.ColorString is string colorString)
+                                                attributes[nameof(renderable.ColorString)] = colorString;
 
-                                            writer.WriteLine2(sB.ToString(), 2);
-                                            sB.Clear();
-                                            attributes.Clear();
+                                            if (renderable?.TileColor is string tileColor)
+                                                attributes[nameof(renderable.TileColor)] = tileColor;
+
+                                            if (renderable?.DetailColor is char detailColor)
+                                                attributes[nameof(renderable.DetailColor)] = detailColor;
+
+                                            if (!attributes.IsNullOrEmpty())
+                                            {
+                                                writer.WriteAnatomyTileObjectBlueprint(
+                                                    NamePrefix: namePrefix,
+                                                    AnatomyName: anatomy.Name,
+                                                    Inherits: inherits,
+                                                    Attributes: attributes,
+                                                    IncludeName: IncludeName,
+                                                    BasedOnBlueprint: blueprint.Name,
+                                                    Indent: 1);
+                                                attributes.Clear();
+                                            }
                                         }
                                     }
+                                }
+                                else
+                                {
+                                    writer.WriteAnatomyTileObjectBlueprint(
+                                        NamePrefix: namePrefix,
+                                        AnatomyName: anatomy.Name,
+                                        Inherits: inherits,
+                                        Attributes: new Dictionary<string, object>()
+                                        {
+                                            { nameof(IPart.Name), nameof(Render) },
+                                            { nameof(Render.Tile), "Creatures/sw_mimic.bmp" },
+                                            { nameof(Render.RenderString), "*" },
+                                            { nameof(Render.ColorString), "&amp;w^y" },
+                                            { nameof(Render.TileColor), "&amp;w" },
+                                            { nameof(Render.DetailColor), "y" },
+                                        },
+                                        IncludeName: IncludeName,
+                                        BasedOnBlueprint: "default",
+                                        Indent: 1);
+                                }
                             }
-                            else
-                                writer.WriteLine2($"<!--xtagUD_CYBP_{anatomy.Name} " +
-                                    (IncludeName ? $"Blueprint=\"default\" " : null) +
-                                    $"Tile=\"Creatures/sw_mimic.bmp\" " +
-                                    $"RenderString=\"*\" " +
-                                    $"ColorString=\"&amp;w^y\" " +
-                                    $"TileColor=\"&amp;w\" " +
-                                    $"DetailColor=\"y\" " +
-                                    $"/-->", 2);
                         }
-
-                    writer.WriteLine2("</object>", Indent: 1)
-                        .WriteLine2("</objects>");
-                    Log("-".ThisManyTimes(25));
+                        writer.WriteLine2("</objects>");
+                        Log("-".ThisManyTimes(25));
+                    }
+                    writer.Flush();
+                    writer.Dispose();
                 }
-                writer.Flush();
-                writer.Dispose();
+                return true;
             }
-            return true;
+            return false;
         }
 
         #endregion

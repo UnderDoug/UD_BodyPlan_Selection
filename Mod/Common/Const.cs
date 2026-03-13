@@ -6,9 +6,9 @@
         public const string MOD_PREFIX = MOD_ID + "_";
         public const string MOD_PREFIX_SHORT = "UD_CYBP_";
 
-        public static string CATEGORY_BLUEPRINT => MOD_PREFIX_SHORT + "BaseCategory";
+        public const string CATEGORY_BLUEPRINT = MOD_PREFIX_SHORT + "BaseCategory";
         public const string CONFIG_BLUEPRINT = MOD_PREFIX_SHORT + "BaseConfiguration";
-        public const string TILES_BLUEPRINT = MOD_PREFIX_SHORT + "AnatomyTiles";
+        public const string TILES_BLUEPRINT = MOD_PREFIX_SHORT + "BaseAnatomyTile";
 
         public const string REMOVE_TAG = "*remove";
 

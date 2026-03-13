@@ -20,20 +20,39 @@ namespace UD_BodyPlan_Selection.Mod
     public class AnatomyChoice
     {
         [HasModSensitiveStaticCache]
-        public class ChoiceRenderable : Renderable
+        public class AnatomyRenderable : Renderable
         {
             public static string RemoveTag => "*remove";
             public static string xTagPrefix => Const.MOD_PREFIX_SHORT;
 
             [ModSensitiveStaticCache]
-            private static Dictionary<string, Dictionary<string, string>> _AnatomyTiles;
-            public static Dictionary<string, Dictionary<string, string>> AnatomyTiles => _AnatomyTiles ??= GameObjectFactory.Factory
-                ?.GetBlueprintIfExists(Const.TILES_BLUEPRINT)
-                ?.xTags;
+            private static Dictionary<string, AnatomyRenderable> _AnatomyRenderables;
+            public static Dictionary<string, AnatomyRenderable> AnatomyRenderables
+            {
+                get
+                {
+                    if (_AnatomyRenderables.IsNullOrEmpty())
+                    {
+                        _AnatomyRenderables = new();
+                        Utils.Log($"Caching {nameof(AnatomyRenderables)}:");
+                        foreach (var blueprint in GameObjectFactory.Factory?.GetBlueprintsInheritingFrom(Const.TILES_BLUEPRINT))
+                        {
+                            if (blueprint.TryGetTag(nameof(Anatomy), out string anatomy))
+                                _AnatomyRenderables[anatomy] = new(blueprint);
+
+                            Utils.Log(
+                                $"{blueprint.Name}, " +
+                                $"{nameof(Anatomy)}: {blueprint.GetTag(nameof(Anatomy), "NO_ANATOMY_TAG")}, " +
+                                $"Tile: {_AnatomyRenderables.GetValue(anatomy)?.Tile}", Indent: 1);
+                        }
+                    }
+                    return _AnatomyRenderables;
+                }
+            }
 
             public bool HFlip;
 
-            public ChoiceRenderable(
+            public AnatomyRenderable(
                 string Tile,
                 string RenderString = null,
                 string ColorString = null,
@@ -49,7 +68,7 @@ namespace UD_BodyPlan_Selection.Mod
             {
                 this.HFlip = HFlip;
             }
-            public ChoiceRenderable(TransformationData Transformation, bool HFlip = false)
+            public AnatomyRenderable(TransformationData Transformation, bool HFlip = false)
                 : this(
                       Tile: Transformation?.Tile,
                       RenderString: Transformation?.RenderString ?? "@",
@@ -58,7 +77,7 @@ namespace UD_BodyPlan_Selection.Mod
                       DetailColor: Transformation?.DetailColor?[0] ?? 'y',
                       HFlip: HFlip)
             { }
-            public ChoiceRenderable(GenotypeEntry GenotypeEntry)
+            public AnatomyRenderable(GenotypeEntry GenotypeEntry)
                 : this(
                       Tile: GenotypeEntry.Tile,
                       RenderString: "@",
@@ -67,7 +86,7 @@ namespace UD_BodyPlan_Selection.Mod
                       DetailColor: GenotypeEntry?.DetailColor?[0] ?? 'y',
                       HFlip: true)
             { }
-            public ChoiceRenderable(SubtypeEntry SubtypeEntry)
+            public AnatomyRenderable(SubtypeEntry SubtypeEntry)
                 : this(
                       Tile: SubtypeEntry.Tile,
                       RenderString: "@",
@@ -76,17 +95,17 @@ namespace UD_BodyPlan_Selection.Mod
                       DetailColor: SubtypeEntry?.DetailColor?[0] ?? 'y',
                       HFlip: true)
             { }
-            public ChoiceRenderable(Renderable Renderable, bool HFlip = false)
+            public AnatomyRenderable(Renderable Renderable, bool HFlip = false)
                 : base(Renderable)
             {
                 this.HFlip = HFlip;
             }
-            public ChoiceRenderable(GameObjectBlueprint Blueprint, bool HFlip = false)
+            public AnatomyRenderable(GameObjectBlueprint Blueprint, bool HFlip = false)
                 : base(Blueprint)
             {
                 this.HFlip = HFlip;
             }
-            public ChoiceRenderable(Dictionary<string, string> xTag, bool HFlip = false)
+            public AnatomyRenderable(Dictionary<string, string> xTag, bool HFlip = false)
                 : base()
             {
                 this.HFlip = HFlip;
@@ -109,10 +128,10 @@ namespace UD_BodyPlan_Selection.Mod
                         bool.TryParse(hFlip, out this.HFlip);
                 }
             }
-            public ChoiceRenderable(string Anatomy, bool HFlip = false)
+            public AnatomyRenderable(string Anatomy, bool HFlip = false)
                 : this(
-                      xTag: AnatomyTiles?.ContainsKey(xTagPrefix + Anatomy) ?? false
-                        ? AnatomyTiles[xTagPrefix + Anatomy]
+                      Renderable: AnatomyRenderables?.ContainsKey(Anatomy) ?? false
+                        ? AnatomyRenderables[Anatomy]
                         : null,
                       HFlip: HFlip)
             { }
@@ -137,7 +156,7 @@ namespace UD_BodyPlan_Selection.Mod
 
         public string DisplayNameStripped => GetDescription()?.Strip();
 
-        public ChoiceRenderable Renderable;
+        public AnatomyRenderable Renderable;
 
         public bool IsDefault;
 
@@ -178,7 +197,7 @@ namespace UD_BodyPlan_Selection.Mod
             _LongDescriptionTK = null;
             _LongDescriptionTKSummary = null;
         }
-        public AnatomyChoice(Anatomy Anatomy, bool IsDefault, ChoiceRenderable Renderable)
+        public AnatomyChoice(Anatomy Anatomy, bool IsDefault, AnatomyRenderable Renderable)
             : this()
         {
             this.Anatomy = Anatomy;
@@ -187,7 +206,7 @@ namespace UD_BodyPlan_Selection.Mod
 
             _ = Category;
         }
-        public AnatomyChoice(Anatomy Anatomy, ChoiceRenderable Renderable)
+        public AnatomyChoice(Anatomy Anatomy, AnatomyRenderable Renderable)
             : this(Anatomy, false, Renderable)
         {
         }
@@ -500,27 +519,25 @@ namespace UD_BodyPlan_Selection.Mod
             return SB;
         }
 
-        public ChoiceRenderable GetRenderable()
+        public AnatomyRenderable GetRenderable()
         {
             if (Renderable == null
                 && Anatomy != null)
             {
-                string safeAnatomyName = Anatomy.Name.Replace("-", "_").Replace(" ", "_");
-                string tileKey = ChoiceRenderable.xTagPrefix + safeAnatomyName;
                 if (AnatomyConfigurations?.FirstTransformationOrDefault() is TransformationData xForm
                     && !xForm.Tile.IsNullOrEmpty()
                     && !xForm.DetailColor.IsNullOrEmpty())
                     Renderable = new(xForm, true);
                 else
-                if (ChoiceRenderable.AnatomyTiles?.ContainsKey(tileKey) ?? false)
-                    Renderable = new(safeAnatomyName, false);
+                if (AnatomyRenderable.AnatomyRenderables?.ContainsKey(Anatomy.Name) ?? false)
+                    Renderable = AnatomyRenderable.AnatomyRenderables[Anatomy.Name];
                 else
                     Renderable = new(GetExampleBlueprint()?.GetRenderable(), false);
             }
 
             return Renderable;
         }
-        public void OverrideRenderable(ChoiceRenderable Renderable)
+        public void OverrideRenderable(AnatomyRenderable Renderable)
         {
             if (Renderable != null)
                 this.Renderable = Renderable;
