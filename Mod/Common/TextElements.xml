@@ -5,28 +5,28 @@
     <tag Name="BaseObject" Value="*noinherit" />
   </object>
   
-  <object Name="UD_CYBP_TextElements Difficult" Inherits="UD_CYBP_BaseTextElement">
+  <object Name="UD_CYBP_TextElements Difficult" Inherits="UD_CYBP_BaseTextElements">
     <tag Name="TextElements" Value="Difficult" />
-    <tag Name="DescriptionAddition" Value="This body plan will be {{r|difficult}} to play with." />
-    <tag Name="SummaryAddition" Value="{{r|Difficult to play}}" />
+    <tag Name="DescriptionBefore" Value="This body plan will be {{r|difficult}} to play with." />
+    <tag Name="SummaryAfter" Value="{{r|Difficult to play}}" />
     <xtagUD_CYBP_Symbols Difficult="r::&#x13;" />
   </object>
   
-  <object Name="UD_CYBP_TextElements Transformation" Inherits="UD_CYBP_BaseTextElement">
+  <object Name="UD_CYBP_TextElements Transformation" Inherits="UD_CYBP_BaseTextElements">
     <tag Name="TextElements" Value="Transformation" />
-    <tag Name="DescriptionAddition" Value="This body plan will be {{r|difficult}} to play with." />
-    <tag Name="SummaryAddition" Value="{{r|Difficult to play}}" />
+    <tag Name="DescriptionBefore" Value="This body plan will be {{r|difficult}} to play with." />
+    <tag Name="SummaryAfter" Value="{{r|Difficult to play}}" />
     <xtagUD_CYBP_Symbols Transformation="r::&#x13;" />
   </object>
   
-  <object Name="UD_CYBP_TextElements Mechanical" Inherits="UD_CYBP_BaseTextElement">
+  <object Name="UD_CYBP_TextElements Mechanical" Inherits="UD_CYBP_BaseTextElements">
     <tag Name="TextElements" Value="Mechanical" />
-    <tag Name="DescriptionAddition" Value="This body plan will be {{r|difficult}} to play with." />
-    <tag Name="SummaryAddition" Value="{{r|Difficult to play}}" />
+    <tag Name="DescriptionBefore" Value="This body plan will be {{r|difficult}} to play with." />
+    <tag Name="SummaryAfter" Value="{{r|Difficult to play}}" />
     <xtagUD_CYBP_Symbols Mechanical="r::&#x13;" />
   </object>
   
-  <object Name="UD_CYBP_TextElements NoCyber" Inherits="UD_CYBP_BaseTextElement">
+  <object Name="UD_CYBP_TextElements NoCyber" Inherits="UD_CYBP_BaseTextElements">
     <tag Name="TextElements" Value="NoCyber" />
     <xtagUD_CYBP_Legend NoCyber="Incompatible with Cybernetics" />
     <xtagUD_CYBP_Symbols NoCyber="r::&#x13;" />

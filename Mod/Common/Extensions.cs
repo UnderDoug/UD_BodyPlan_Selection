@@ -457,6 +457,7 @@ namespace UD_ChooseYourBodyPlan.Mod
             }
             return false;
         }
+
         public static GameObjectBlueprint AssignStringFieldFromTag(this GameObjectBlueprint DataBucket, string TagName, ref string Field)
         {
             DataBucket.TryGetTagValueForData(TagName, out Field);
@@ -478,5 +479,45 @@ namespace UD_ChooseYourBodyPlan.Mod
                 && (Field = XTag.GetValue(Key, Field)).EqualsNoCase(REMOVE_TAG))
                 Field = null;
         }
+
+        public static bool TryGetXtag(this GameObjectBlueprint DataBucket, string XTagName, out Dictionary<string, string> XTag)
+            => (XTag = DataBucket?.xTags?.GetValue(XTagName)) != null;
+
+        public static int Count<T>(this IEnumerable<T> Source, Predicate<T> Basis)
+        {
+            int count = 0;
+            if (Basis != null)
+            {
+                foreach (var element in Source)
+                    if (Basis(element))
+                        count++;
+            }
+            return count;
+        }
+
+        public static IEnumerable<KeyValuePair<string, string>> GetTags(
+            this GameObjectBlueprint DataBucket,
+            Predicate<string> WithName,
+            Predicate<string> WithValue
+            )
+        {
+            if (DataBucket?.Tags == null)
+                yield break;
+
+            foreach (var tag in DataBucket.Tags)
+                if (WithName?.Invoke(tag.Key) is not false
+                    && WithValue?.Invoke(tag.Value) is not false)
+                    yield return tag;
+        }
+
+        public static IEnumerable<KeyValuePair<string, string>> GetTagsStartingWith(
+            this GameObjectBlueprint DataBucket,
+            string String
+            )
+            => DataBucket.GetTags(s => s.StartsWith(String), null);
+
+        public static bool IsOption(this string String)
+            => !String.IsNullOrEmpty()
+            && XRL.UI.Options.HasOption(String);
     }
 }

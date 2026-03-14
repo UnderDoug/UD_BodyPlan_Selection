@@ -1,0 +1,164 @@
+﻿using System;
+using System.Collections.Generic;
+
+using ConsoleLib.Console;
+
+using XRL;
+using XRL.World;
+using XRL.World.Anatomy;
+using XRL.World.Parts;
+
+using static UD_ChooseYourBodyPlan.Mod.AnatomyConfiguration;
+
+namespace UD_ChooseYourBodyPlan.Mod
+{
+    [HasModSensitiveStaticCache]
+    public class BodyPlanRender : Renderable, ILoadFromDataBucket<BodyPlanRender>
+    {
+        [ModSensitiveStaticCache]
+        private static Dictionary<string, BodyPlanRender> _BodyPlanRenderables;
+        public static Dictionary<string, BodyPlanRender> BodyPlanRenderables
+        {
+            get
+            {
+                if (_BodyPlanRenderables.IsNullOrEmpty())
+                {
+                    _BodyPlanRenderables = new();
+                    Utils.Log($"Caching {nameof(BodyPlanRenderables)}:");
+                    foreach (var blueprint in GameObjectFactory.Factory?.GetBlueprintsInheritingFrom(Const.BODYPLAN_ENTRY_BLUEPRINT))
+                    {
+                        if (blueprint.TryGetTag(nameof(Anatomy), out string anatomy))
+                            _BodyPlanRenderables[anatomy] = new(blueprint);
+
+                        Utils.Log(
+                            $"{blueprint.Name}, " +
+                            $"{nameof(Anatomy)}: {blueprint.GetTag(nameof(Anatomy), "NO_ANATOMY_TAG")}, " +
+                            $"Tile: {_BodyPlanRenderables.GetValue(anatomy)?.Tile}", Indent: 1);
+                    }
+                }
+                return _BodyPlanRenderables;
+            }
+        }
+
+
+        public string BaseDataBucketBlueprint => "Object";
+
+        public string CacheKey => throw new NotImplementedException();
+
+        public bool HFlip;
+
+        public BodyPlanRender()
+            : base()
+        {
+        }
+
+        public BodyPlanRender(
+            string Tile,
+            string RenderString = null,
+            string ColorString = null,
+            string TileColor = null,
+            char DetailColor = '\0',
+            bool HFlip = false)
+            : base(
+                  Tile: Tile,
+                  RenderString: RenderString,
+                  ColorString: ColorString,
+                  TileColor: TileColor,
+                  DetailColor: DetailColor)
+        {
+            this.HFlip = HFlip;
+        }
+
+        public BodyPlanRender(TransformationData Transformation, bool HFlip = false)
+            : this(
+                  Tile: Transformation?.Tile,
+                  RenderString: Transformation?.RenderString ?? "@",
+                  ColorString: $"{Transformation?.TileColor ?? "&Y"}^{Transformation?.DetailColorS ?? "y"}",
+                  TileColor: Transformation?.TileColor ?? "&Y",
+                  DetailColor: Transformation?.DetailColor ?? 'y',
+                  HFlip: HFlip)
+        { }
+
+        public BodyPlanRender(GenotypeEntry GenotypeEntry)
+            : this(
+                  Tile: GenotypeEntry.Tile,
+                  RenderString: "@",
+                  ColorString: $"&Y^{GenotypeEntry.DetailColor}",
+                  TileColor: "&Y",
+                  DetailColor: GenotypeEntry?.DetailColor?[0] ?? 'y',
+                  HFlip: true)
+        { }
+
+        public BodyPlanRender(SubtypeEntry SubtypeEntry)
+            : this(
+                  Tile: SubtypeEntry.Tile,
+                  RenderString: "@",
+                  ColorString: $"&Y^{SubtypeEntry.DetailColor}",
+                  TileColor: "&Y",
+                  DetailColor: SubtypeEntry?.DetailColor?[0] ?? 'y',
+                  HFlip: true)
+        { }
+
+        public BodyPlanRender(Renderable Renderable, bool HFlip = false)
+            : base(Renderable)
+        {
+            this.HFlip = HFlip;
+        }
+
+        public BodyPlanRender(GameObjectBlueprint Blueprint, bool HFlip = false)
+            : base(Blueprint)
+        {
+            this.HFlip = HFlip;
+        }
+
+        public override bool getHFlip()
+            => HFlip;
+
+        private BodyPlanRender LoadFromDataBucketTags(GameObjectBlueprint DataBucket, bool? HFlip = null)
+        {
+            if (DataBucket == null)
+                return null;
+
+            DataBucket.AssignStringFieldFromTag(nameof(Tile), ref Tile);
+            DataBucket.AssignStringFieldFromTag(nameof(RenderString), ref RenderString);
+            DataBucket.AssignStringFieldFromTag(nameof(ColorString), ref ColorString);
+            DataBucket.AssignStringFieldFromTag(nameof(TileColor), ref TileColor);
+            if (DataBucket.TryGetTagValueForData(nameof(DetailColor), out string detailColor)
+                && !detailColor.EqualsNoCase(Const.REMOVE_TAG))
+                DetailColor = detailColor?[0] ?? '\0';
+
+            if (HFlip == null)
+            {
+                if (DataBucket.TryGetTagValueForData(nameof(HFlip), out string hFlip)
+                    && !hFlip.EqualsNoCase(Const.REMOVE_TAG))
+                    bool.TryParse(hFlip, out this.HFlip);
+            }
+            else
+                this.HFlip = HFlip.GetValueOrDefault();
+
+            return this;
+        }
+
+        public BodyPlanRender LoadFromDataBucket(GameObjectBlueprint DataBucket)
+        {
+            if (DataBucket.HasPart(nameof(Render)))
+            {
+                Set(DataBucket);
+                if (DataBucket.TryGetTagValueForData(nameof(HFlip), out string hFlip)
+                    && !hFlip.EqualsNoCase(Const.REMOVE_TAG))
+                    bool.TryParse(hFlip, out HFlip);
+            }
+            else
+                LoadFromDataBucketTags(DataBucket);
+
+            return this;
+        }
+
+        public BodyPlanRender Clone()
+            => new(this, HFlip);
+
+        public void Dispose()
+        {
+        }
+    }
+}

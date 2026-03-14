@@ -12,56 +12,82 @@ namespace UD_ChooseYourBodyPlan.Mod
 {
     public class TransformationData : ILoadFromDataBucket<TransformationData>
     {
+        public string BaseDataBucketBlueprint => Const.XFORM_DATA_BLUEPRINT;
+
         public static string RemoveTag => Const.REMOVE_TAG;
 
-        public BodyPlanRenderable Render;
-        public string RenderString;
-        public string Tile;
-        public string TileColor;
-        public string DetailColor;
+        public string CacheKey => Anatomy;
+
+        public string Anatomy;
+
+        public BodyPlanRender Render;
+
+        public string RenderString => Render?.RenderString;
+        public string Tile => Render?.Tile;
+        public string TileColor => Render?.TileColor;
+        public char DetailColor => Render?.DetailColor ?? '\0';
+        public string DetailColorS => (Render?.DetailColor ?? '\0').ToString();
+
         public string Species;
         public string Property;
+
         public List<string> Mutations;
+
+        public OptionDelegates OptionDelegates;
 
         public TransformationData()
         {
-            RenderString = null;
-            Tile = null;
-            Tile = null;
-            DetailColor = null;
+            Anatomy = null;
+            Render = null;
             Species = null;
             Property = null;
             Mutations = null;
         }
-        public TransformationData(Dictionary<string, string> xTag)
-            : this()
-        {
-            if (xTag != null)
-            {
-                Render = new(xTag);
-                xTag.AssignStringFieldFromXTag(nameof(RenderString), ref RenderString);
-                xTag.AssignStringFieldFromXTag(nameof(Tile), ref Tile);
-                xTag.AssignStringFieldFromXTag(nameof(TileColor), ref TileColor);
-                xTag.AssignStringFieldFromXTag(nameof(DetailColor), ref DetailColor);
-                xTag.AssignStringFieldFromXTag(nameof(Species), ref Species);
-                xTag.AssignStringFieldFromXTag(nameof(Property), ref Property);
-
-                if (xTag.TryGetValue(nameof(Mutations), out string mutations)
-                    && !mutations.EqualsNoCase(RemoveTag))
-                    Mutations = Utils.GetVersionSafeParser<List<string>>()?.Invoke(mutations);
-            }
-        }
         public TransformationData(GameObjectBlueprint DataBucket)
             : this()
         {
+            LoadFromDataBucket(DataBucket);
+        }
+        public TransformationData(TransformationData Source)
+            : this()
+        {
+            Anatomy = Source.Anatomy;
+            Render = new(Source);
+            Species = Source.Species;
+            Property = Source.Property;
+            Mutations = !Source.Mutations.IsNullOrEmpty() ? new(Source.Mutations) : new();
+        }
+
+        public void DebugOutput(int Indent = 0)
+        {
+            Utils.Log($"{nameof(RenderString)}: {RenderString ?? "NO_RENDER_STRING"}", Indent: Indent);
+            Utils.Log($"{nameof(Tile)}: {Tile ?? "NO_TILE"}", Indent: Indent);
+            Utils.Log($"{nameof(TileColor)}: {TileColor ?? "NO_TILE_COLOR"}", Indent: Indent);
+            Utils.Log($"{nameof(DetailColor)}: {DetailColorS ?? "NO_DETAIL_COLOR"}", Indent: Indent);
+            Utils.Log($"{nameof(Species)}: {Species ?? "NO_SPECIES"}", Indent: Indent);
+            Utils.Log($"{nameof(Property)}: {Property ?? "NO_PROPERTY"}", Indent: Indent);
+            Utils.Log($"{nameof(Mutations)}:", Indent: Indent);
+            if (Mutations.IsNullOrEmpty())
+                Utils.Log("::None", Indent: Indent + 1);
+            else
+                foreach (string mutation in Mutations)
+                    Utils.Log($"::{mutation}", Indent: Indent + 1);
+        }
+
+        public TransformationData LoadFromDataBucket(GameObjectBlueprint DataBucket)
+        {
             if (DataBucket.InheritsFrom(Const.XFORM_DATA_BLUEPRINT))
             {
+                DataBucket.TryGetTagValueForData(nameof(Anatomy), out Anatomy);
+
                 DataBucket.TryGetTagValueForData(nameof(Species), out Species);
                 DataBucket.TryGetTagValueForData(nameof(Property), out Property);
 
                 Render = new(DataBucket);
                 if (!DataBucket.Mutations.IsNullOrEmpty())
                     Mutations = new(DataBucket.Mutations.Keys);
+
+                OptionDelegates.ParseDataBucket(DataBucket);
 
                 if (DataBucket.TryGetTag(nameof(Mutations), out string mutations)
                     && mutations.CachedCommaExpansion().ToList() is List<string> mutationsList
@@ -83,22 +109,18 @@ namespace UD_ChooseYourBodyPlan.Mod
                     $"from DataBucket inheriting from \"{DataBucket.GetBase()}\" " +
                     $"instead of \"{Const.XFORM_DATA_BLUEPRINT}\"");
             }
+
+            return this;
         }
 
-        public void DebugOutput(int Indent = 0)
+        public TransformationData Clone()
+            => new(this);
+
+        public void Dispose()
         {
-            Utils.Log($"{nameof(RenderString)}: {RenderString ?? "NO_RENDER_STRING"}", Indent: Indent);
-            Utils.Log($"{nameof(Tile)}: {Tile ?? "NO_TILE"}", Indent: Indent);
-            Utils.Log($"{nameof(TileColor)}: {TileColor ?? "NO_TILE_COLOR"}", Indent: Indent);
-            Utils.Log($"{nameof(DetailColor)}: {DetailColor ?? "NO_DETAIL_COLOR"}", Indent: Indent);
-            Utils.Log($"{nameof(Species)}: {Species ?? "NO_SPECIES"}", Indent: Indent);
-            Utils.Log($"{nameof(Property)}: {Property ?? "NO_PROPERTY"}", Indent: Indent);
-            Utils.Log($"{nameof(Mutations)}:", Indent: Indent);
-            if (Mutations.IsNullOrEmpty())
-                Utils.Log("::None", Indent: Indent + 1);
-            else
-                foreach (string mutation in Mutations)
-                    Utils.Log($"::{mutation}", Indent: Indent + 1);
+            Render = null;
+            OptionDelegates.Clear();
+            OptionDelegates = null;
         }
     }
 }

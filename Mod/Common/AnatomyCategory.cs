@@ -45,6 +45,10 @@ namespace UD_ChooseYourBodyPlan.Mod
                 : this(GetBodyPartCategoryColor(AnatomyCategoryCode))
             { }
 
+            public TextShader(TextShader Source)
+                : this(Source.Shader, Source.Type, Source.Colors, Source.Color)
+            { }
+
             public TextShader Finalize(string OriginalShader = null)
             {
                 Shader = Shader.ShaderColorOrNull();
@@ -188,7 +192,7 @@ namespace UD_ChooseYourBodyPlan.Mod
                                     CategoryName = GetBodyPartCategoryName(i),
                                     DisplayName = GetBodyPartCategoryName(i),
                                     Shader = new TextShader(i).Finalize(),
-                                    Choices = new()
+                                    Entries = new()
                                 });
 
                             Utils.Log($"{i}: {_CategoryByID[i]?.CategoryName}", Indent: 2);
@@ -204,7 +208,7 @@ namespace UD_ChooseYourBodyPlan.Mod
                         var category = new AnatomyCategory(dataBucket);
                         if (_CategoryByID.Values.FirstOrDefault(c => c.CategoryName == category.CategoryName) is AnatomyCategory existingCategory)
                         {
-                            existingCategory.MergeWith(category);
+                            existingCategory.Merge(category);
                             Utils.Log($"{dataBucket.Name}, {category.CategoryName}: Merged", Indent: 2);
                         }
                         else
@@ -245,6 +249,10 @@ namespace UD_ChooseYourBodyPlan.Mod
         }
 
         public static IEnumerable<AnatomyCategory> Categories => CategoryByID.Values;
+
+        public string BaseDataBucketBlueprint => Const.CATEGORY_BLUEPRINT;
+
+        public string CacheKey => CategoryName;
 
         public static bool IsCodeValid(int Code)
             => Code == Math.Clamp(Code, LowestCategory, HighestCategory);
@@ -297,14 +305,14 @@ namespace UD_ChooseYourBodyPlan.Mod
                         ID = categoryCode,
                         DisplayName = GetBodyPartCategoryName(categoryCode),
                         Shader = new TextShader(categoryCode).Finalize(),
-                        Choices = new(),
+                        Entries = new(),
                     };
                 }
             }
-            category.RequireChoice(Choice);
+            category.RequireEntry(Choice);
             if (CategoryByID.TryGetValue(0, out var defaultCategory))
             {
-                defaultCategory.RequireChoice(Choice);
+                defaultCategory.RequireEntry(Choice);
                 if (Choice.IsDefault)
                     category = defaultCategory;
             }
@@ -332,7 +340,7 @@ namespace UD_ChooseYourBodyPlan.Mod
         public string DisplayName;
         public TextShader Shader;
 
-        public List<BodyPlanEntry> Choices;
+        public List<BodyPlanEntry> Entries;
 
         public AnatomyCategory()
         {
@@ -340,15 +348,99 @@ namespace UD_ChooseYourBodyPlan.Mod
             CategoryName = null;
             DisplayName = null;
             Shader = default;
-            Choices = new();
+            Entries = new();
         }
 
         public AnatomyCategory(GameObjectBlueprint DataBucket)
             : base()
         {
+            LoadFromDataBucket(DataBucket);
+        }
+
+        public AnatomyCategory Merge(AnatomyCategory Other)
+        {
+            if (Other != null)
+            {
+                if (!Other.DisplayName.IsNullOrEmpty())
+                    DisplayName = Other.DisplayName;
+                
+                Shader.Merge(Other.Shader);
+            }
+            return this;
+        }
+
+        public string GetDisplayName()
+            => Shader.Apply(DisplayName);
+
+        public bool IsValid(Predicate<BodyPlanEntry> Filter = null)
+            => !DisplayName.IsNullOrEmpty()
+            && GetEntries() is IEnumerable<BodyPlanEntry> entries
+            && !entries.IsNullOrEmpty()
+            && (Filter == null
+                || entries.Any(Filter.Invoke))
+            ;
+
+        public bool IsDefaultMatching(BodyPlanEntry Choice)
+            => Choice != null
+            && (ID == 0) == Choice.IsDefault;
+
+        public IEnumerable<BodyPlanEntry> GetEntries(Predicate<BodyPlanEntry> Filter = null)
+        {
+            if (Entries.IsNullOrEmpty())
+                yield break;
+
+            Entries.StableSortInPlace((x, y) => string.Compare(x?.Anatomy?.Name, y?.Anatomy?.Name));
+
+            foreach (var choice in Entries)
+            {
+                if (IsDefaultMatching(choice)
+                    && choice.Anatomy != null
+                    && (Filter == null
+                        || Filter(choice)))
+                {
+                    yield return choice;
+                }
+            }
+        }
+
+        public void RequireEntry(BodyPlanEntry Entry)
+        {
+            if (Entry != null
+                && !Entries.Any(e => e?.Anatomy?.Name == Entry?.Anatomy?.Name))
+                Entries.Add(Entry);
+        }
+
+        public void Dispose()
+        {
+            Entries.Clear();
+            Entries = null;
+        }
+
+        public void DebugOutput(int Indent = 0, bool SkipCategoryName = false)
+        {
+            Utils.Log($"{nameof(ID)}: {ID}", Indent: Indent);
+            if (!SkipCategoryName)
+                Utils.Log($"{nameof(CategoryName)}: {CategoryName ?? "NO_CATEGORY_NAME"}", Indent: Indent);
+            Utils.Log($"{nameof(DisplayName)}: {DisplayName ?? "NO_DISPLAY_NAME"}", Indent: Indent);
+            Utils.Log($"{nameof(Shader)}: {Shader}", Indent: Indent);
+            Utils.Log($"{nameof(Entries)}:", Indent: Indent);
+            if (Entries.IsNullOrEmpty())
+                Utils.Log("::None", Indent: Indent + 1);
+            else
+                foreach (var choice in Entries)
+                    Utils.Log($"::{choice.GetDescription()}", Indent: Indent + 1);
+        }
+
+        public AnatomyCategory LoadFromDataBucket(GameObjectBlueprint DataBucket)
+        {
+            if (!ILoadFromDataBucket<AnatomyCategory>.CheckIsValidDataBucket(this, DataBucket))
+                return null;
+
+            if (!DataBucket.TryGetTagValueForData(nameof(CategoryName), out CategoryName))
+                return null;
+
             ID = -1;
 
-            DataBucket.AssignStringFieldFromTag(nameof(CategoryName), ref CategoryName);
             DataBucket.AssignStringFieldFromTag(nameof(DisplayName), ref DisplayName);
 
             if (DataBucket.TryGetTagValueForData(nameof(TextShader.Color), out string color))
@@ -373,88 +465,17 @@ namespace UD_ChooseYourBodyPlan.Mod
                 if (xTags.TryGetValue(TextShader.TextShaderXTag, out Dictionary<string, string> textShaderXTag))
                     Shader.Merge(textShaderXTag);
             }
-        }
-
-        public AnatomyCategory MergeWith(AnatomyCategory Other)
-        {
-            if (Other != null)
-            {
-                if (!Other.DisplayName.IsNullOrEmpty())
-                    DisplayName = Other.DisplayName;
-                
-                Shader.Merge(Other.Shader);
-            }
-            return this;
-        }
-        public AnatomyCategory MergeWithDataBucket(GameObjectBlueprint DataBucket)
-        {
-            if (DataBucket.InheritsFrom(Const.CATEGORY_BLUEPRINT))
-            {
-                using var other = new AnatomyCategory(DataBucket);
-                if (CategoryName == other.CategoryName)
-                    MergeWith(other);
-            }
             return this;
         }
 
-        public string GetDisplayName()
-            => Shader.Apply(DisplayName);
-
-        public bool IsValid(Predicate<BodyPlanEntry> Filter = null)
-            => !DisplayName.IsNullOrEmpty()
-            && GetChoices() is IEnumerable<BodyPlanEntry> choices
-            && !choices.IsNullOrEmpty()
-            && (Filter == null
-                || choices.Any(Filter.Invoke))
-            ;
-
-        public bool IsDefaultMatching(BodyPlanEntry Choice)
-            => Choice != null
-            && (ID == 0) == Choice.IsDefault;
-
-        public IEnumerable<BodyPlanEntry> GetChoices(Predicate<BodyPlanEntry> Filter = null)
-        {
-            if (Choices.IsNullOrEmpty())
-                yield break;
-
-            Choices.StableSortInPlace((x, y) => string.Compare(x?.Anatomy?.Name, y?.Anatomy?.Name));
-
-            foreach (var choice in Choices)
+        public AnatomyCategory Clone()
+            => new()
             {
-                if (IsDefaultMatching(choice)
-                    && choice.Anatomy != null
-                    && (Filter == null
-                        || Filter(choice)))
-                {
-                    yield return choice;
-                }
-            }
-        }
-
-        public void RequireChoice(BodyPlanEntry Choice)
-        {
-            if (Choice != null
-                && !Choices.Any(c => c?.Anatomy?.Name == Choice?.Anatomy?.Name))
-                Choices.Add(Choice);
-        }
-
-        public void Dispose()
-        {
-        }
-
-        public void DebugOutput(int Indent = 0, bool SkipCategoryName = false)
-        {
-            Utils.Log($"{nameof(ID)}: {ID}", Indent: Indent);
-            if (!SkipCategoryName)
-                Utils.Log($"{nameof(CategoryName)}: {CategoryName ?? "NO_CATEGORY_NAME"}", Indent: Indent);
-            Utils.Log($"{nameof(DisplayName)}: {DisplayName ?? "NO_DISPLAY_NAME"}", Indent: Indent);
-            Utils.Log($"{nameof(Shader)}: {Shader}", Indent: Indent);
-            Utils.Log($"{nameof(Choices)}:", Indent: Indent);
-            if (Choices.IsNullOrEmpty())
-                Utils.Log("::None", Indent: Indent + 1);
-            else
-                foreach (var choice in Choices)
-                    Utils.Log($"::{choice.GetDescription()}", Indent: Indent + 1);
-        }
+                ID = -1,
+                CategoryName = CategoryName,
+                DisplayName = DisplayName,
+                Shader = new(Shader),
+                Entries = new(),
+            };
     }
 }

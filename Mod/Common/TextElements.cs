@@ -4,6 +4,7 @@ using System.Text;
 
 using XRL;
 using XRL.Collections;
+using XRL.World;
 
 namespace UD_ChooseYourBodyPlan.Mod
 {
@@ -21,6 +22,21 @@ namespace UD_ChooseYourBodyPlan.Mod
                 this.Color = Color;
                 this.Value = Value;
             }
+            public Symbol(KeyValuePair<string, string> XTagEntry)
+                : this()
+            {
+                Name = XTagEntry.Key;
+                if (!XTagEntry.Value.Contains(":"))
+                    Value = XTagEntry.Value[0];
+                else
+                {
+                    if (XTagEntry.Value.Split(":") is string[] pair)
+                    {
+                        Color = pair[0][0];
+                        Value = pair[1][0];
+                    }
+                }
+            }
 
             public override readonly string ToString()
                 => Color != '\0'
@@ -29,11 +45,13 @@ namespace UD_ChooseYourBodyPlan.Mod
                 ;
         }
 
+        public string CacheKey => Name;
+
         public string Name;
-        public List<string> DescriptionBefore;
-        public List<string> DescriptionAfter;
-        public List<string> SummaryBefore;
-        public List<string> SummaryAfter;
+        public string DescriptionBefore;
+        public string DescriptionAfter;
+        public string SummaryBefore;
+        public string SummaryAfter;
 
         public StringMap<Symbol> SymbolsByName;
 
@@ -51,6 +69,59 @@ namespace UD_ChooseYourBodyPlan.Mod
                 }
                 return _Symbols;
             }
+        }
+
+        public string BaseDataBucketBlueprint => Const.TEXT_ELEMENTS_BLUEPRINT;
+
+        public TextElements LoadFromDataBucket(GameObjectBlueprint DataBucket)
+        {
+            if (!ILoadFromDataBucket<TextElements>.CheckIsValidDataBucket(this, DataBucket))
+                return null;
+
+            if(!DataBucket.TryGetTagValueForData(nameof(TextElements), out Name))
+                DataBucket.TryGetTagValueForData(nameof(Name), out Name);
+
+            if (Name.IsNullOrEmpty())
+                return null;
+
+            DataBucket.AssignStringFieldFromTag(nameof(DescriptionBefore), ref DescriptionBefore);
+            DataBucket.AssignStringFieldFromTag(nameof(DescriptionAfter), ref DescriptionAfter);
+
+            DataBucket.AssignStringFieldFromTag(nameof(SummaryBefore), ref SummaryBefore);
+            DataBucket.AssignStringFieldFromTag(nameof(SummaryAfter), ref SummaryAfter);
+
+            if (DataBucket.TryGetXtag(nameof(Symbols), out Dictionary<string, string> symbolsXTag))
+            {
+                SymbolsByName = new();
+                foreach (var xTagEntry in symbolsXTag)
+                    SymbolsByName[xTagEntry.Key] = new(xTagEntry);
+            }
+            return this;
+        }
+
+        public TextElements Clone()
+        {
+            throw new NotImplementedException();
+        }
+
+        public void Dispose()
+        {
+            SymbolsByName.Clear();
+            SymbolsByName = null;
+
+            _Symbols.Clear();
+            _Symbols = null;
+        }
+    }
+
+    public static class TextElementsExtensions
+    {
+        public static IEnumerable<KeyValuePair<string, string>> GetTextElementsTags(this GameObjectBlueprint DataBucket)
+        {
+            string startsWith = $"{nameof(TextElements)}.";
+            int startsWithIndex = startsWith.Length - 1;
+            foreach ((var tagName, var tagValue) in DataBucket.GetTagsStartingWith(startsWith))
+                yield return new(tagName[startsWithIndex..], tagValue);
         }
     }
 }

@@ -316,7 +316,7 @@ namespace UD_ChooseYourBodyPlan.Mod.CharacterBuilds.UI
             var sB = Event.NewStringBuilder();
             bool isTK = module?.GenotypeModuleData?.Entry?.IsTrueKin ?? false;
 
-            if (Category?.GetChoices(AnatomyChoiceIsValid) is not IEnumerable<BodyPlanEntry> choices
+            if (Category?.GetEntries(AnatomyChoiceIsValid) is not IEnumerable<BodyPlanEntry> choices
                 || (Category != null
                     && choices.IsNullOrEmpty()))
             {
@@ -364,7 +364,7 @@ namespace UD_ChooseYourBodyPlan.Mod.CharacterBuilds.UI
                 {
                     Utils.Log(category?.GetDisplayName());
                     if (!Utils.DisableDebug)
-                        foreach (var choice in category?.Choices ?? new List<BodyPlanEntry>())
+                        foreach (var choice in category?.Entries ?? new List<BodyPlanEntry>())
                             Utils.Log($"    {choice?.Anatomy?.Name}");
 
                     if (category.IsValid(c => AnatomyChoices.Any(ch => ch?.Anatomy?.Name == c?.Anatomy?.Name)))

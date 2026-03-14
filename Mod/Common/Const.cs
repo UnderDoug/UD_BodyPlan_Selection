@@ -6,6 +6,7 @@
         public const string MOD_PREFIX = MOD_ID + "_";
         public const string MOD_PREFIX_SHORT = "UD_CYBP_";
 
+        public const string TEXT_ELEMENTS_BLUEPRINT = MOD_PREFIX_SHORT + "BaseTextElements";
         public const string CATEGORY_BLUEPRINT = MOD_PREFIX_SHORT + "BaseCategory";
         public const string CONFIG_BLUEPRINT = MOD_PREFIX_SHORT + "BaseConfiguration";
         public const string BODYPLAN_ENTRY_BLUEPRINT = MOD_PREFIX_SHORT + "BaseAnatomyEntry";
