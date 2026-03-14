@@ -17,9 +17,9 @@ using XRL.World;
 using XRL.World.Anatomy;
 using XRL.World.Parts;
 
-using static UD_BodyPlan_Selection.Mod.CharacterBuilds.QudBodyPlanModule;
+using static UD_ChooseYourBodyPlan.Mod.CharacterBuilds.QudBodyPlanModule;
 
-namespace UD_BodyPlan_Selection.Mod
+namespace UD_ChooseYourBodyPlan.Mod
 {
     [HasWishCommand]
     [HasModSensitiveStaticCache]
@@ -47,7 +47,7 @@ namespace UD_BodyPlan_Selection.Mod
         [ModSensitiveCacheInit]
         public static void ClearCacheOfGenerallyEligbleForDisplayBlueprints()
         {
-            Log(typeof(AnatomyChoice).CallChain(nameof(ClearCacheOfGenerallyEligbleForDisplayBlueprints)));
+            Log(typeof(BodyPlanEntry).CallChain(nameof(ClearCacheOfGenerallyEligbleForDisplayBlueprints)));
             _GenerallyEligbleForDisplayBlueprints = null;
         }
 
@@ -152,7 +152,7 @@ namespace UD_BodyPlan_Selection.Mod
                 yield return configuration;
             }
         }
-        public static IEnumerable<AnatomyConfiguration> GetAnatomyConfigurations(AnatomyChoice Choice)
+        public static IEnumerable<AnatomyConfiguration> GetAnatomyConfigurations(BodyPlanEntry Choice)
             => GetAnatomyConfigurations(Choice?.Anatomy)
             ;
 
@@ -162,12 +162,18 @@ namespace UD_BodyPlan_Selection.Mod
         public static bool TryGetAnatomyConfigurations(Anatomy Anatomy, out IEnumerable<AnatomyConfiguration> AnatomyConfigurations)
             => TryGetAnatomyConfigurations(Anatomy?.Name, out AnatomyConfigurations)
             ;
-        public static bool TryGetAnatomyConfigurations(AnatomyChoice Choice, out IEnumerable<AnatomyConfiguration> AnatomyConfigurations)
+        public static bool TryGetAnatomyConfigurations(BodyPlanEntry Choice, out IEnumerable<AnatomyConfiguration> AnatomyConfigurations)
             => TryGetAnatomyConfigurations(Choice?.Anatomy, out AnatomyConfigurations)
             ;
 
         #endregion
         #region Pseudo-Debug
+
+        public static void Error(object Message)
+            => ThisMod.Error(Message);
+
+        public static void Warn(object Message)
+            => ThisMod.Warn(Message);
 
         public static bool DisableDebug = false;
 
@@ -219,13 +225,13 @@ namespace UD_BodyPlan_Selection.Mod
 
         #region Wishes
 
-        public static string UD_CYBP_Output => DataManager.SavePath("AnatomyTiles.xml");
+        public static string UD_CYBP_Output => DataManager.SavePath("BodyPlanEntrys.xml");
 
         [ModSensitiveStaticCache]
-        public static List<AnatomyChoice> AnatomyChoices = new();
+        public static List<BodyPlanEntry> BodyPlanEntries = new();
 
-        [WishCommand(Command = "UD_CYBP anatomy tile tags")]
-        public static bool AnatomyTileTags_WishHandler(string Parameters)
+        [WishCommand(Command = "UD_CYBP bodyplans from blueprints")]
+        public static bool BodyPlanEntryTags_WishHandler(string Parameters)
         {
             if (Popup.ShowYesNo("Include blueprint names in output file?") is DialogResult result
                 && result != DialogResult.Cancel)
@@ -266,7 +272,7 @@ namespace UD_BodyPlan_Selection.Mod
                     if (modPrefix == null)
                         return false;
 
-                    namePrefix = "UD_CYBP_AnatomyTile";
+                    namePrefix = "UD_CYBP_BodyPlanEntry";
 
                     if (!modPrefix.IsNullOrEmpty())
                         namePrefix = $"{modPrefix}_{namePrefix}";
@@ -320,10 +326,10 @@ namespace UD_BodyPlan_Selection.Mod
                     "Picking specific objects out into a separate file is recommended.\n\nAre you sure?") != DialogResult.Yes)
                     return false;
 
-                string inherits = Const.TILES_BLUEPRINT;
+                string inherits = Const.BODYPLAN_ENTRY_BLUEPRINT;
                 if (new StreamWriter($"{forAnatomy}{UD_CYBP_Output}") is StreamWriter writer)
                 {
-                    using (var anatomyChoices = ScopeDisposedList<AnatomyChoice>.GetFromPoolFilledWith(AnatomyChoices))
+                    using (var anatomyChoices = ScopeDisposedList<BodyPlanEntry>.GetFromPoolFilledWith(BodyPlanEntries))
                     {
                         Log("-".ThisManyTimes(25));
                         writer.WriteLine2("<?xml version=\"1.0\" encoding=\"utf-8\" ?>")
@@ -371,7 +377,7 @@ namespace UD_BodyPlan_Selection.Mod
 
                                             if (!attributes.IsNullOrEmpty())
                                             {
-                                                writer.WriteAnatomyTileObjectBlueprint(
+                                                writer.WriteBodyPlanEntryBlueprint(
                                                     NamePrefix: namePrefix,
                                                     AnatomyName: anatomy.Name,
                                                     Inherits: inherits,
@@ -386,7 +392,7 @@ namespace UD_BodyPlan_Selection.Mod
                                 }
                                 else
                                 {
-                                    writer.WriteAnatomyTileObjectBlueprint(
+                                    writer.WriteBodyPlanEntryBlueprint(
                                         NamePrefix: namePrefix,
                                         AnatomyName: anatomy.Name,
                                         Inherits: inherits,

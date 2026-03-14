@@ -14,13 +14,13 @@ using XRL.UI.Framework;
 using ColorUtility = ConsoleLib.Console.ColorUtility;
 using Event = XRL.World.Event;
 
-using UD_BodyPlan_Selection.Mod;
+using UD_ChooseYourBodyPlan.Mod;
 using XRL.CharacterBuilds;
 using XRL;
-using static UD_BodyPlan_Selection.Mod.CharacterBuilds.QudBodyPlanModule;
+using static UD_ChooseYourBodyPlan.Mod.CharacterBuilds.QudBodyPlanModule;
 using System.Text;
 
-namespace UD_BodyPlan_Selection.Mod.CharacterBuilds.UI
+namespace UD_ChooseYourBodyPlan.Mod.CharacterBuilds.UI
 {
     [UIView(
         ID: "CharacterCreation:UD_PickBodyPlan",
@@ -69,7 +69,7 @@ namespace UD_BodyPlan_Selection.Mod.CharacterBuilds.UI
 
         private List<CategoryMenuData> AnatomiesMenuState = new();
 
-        private List<AnatomyChoice> AnatomyChoices => module?.AnatomyChoices;
+        private List<BodyPlanEntry> AnatomyChoices => module?.AnatomyChoices;
 
         private PrefixMenuOption Selected;
 
@@ -277,7 +277,7 @@ namespace UD_BodyPlan_Selection.Mod.CharacterBuilds.UI
                 prefabComponent.onHighlight.Invoke(Selected);
         }
 
-        private PrefixMenuOption MakeMenuOption(AnatomyChoice Choice, StringBuilder SB, bool IsTK, out bool IsSelected)
+        private PrefixMenuOption MakeMenuOption(BodyPlanEntry Choice, StringBuilder SB, bool IsTK, out bool IsSelected)
         {
             IsSelected = false;
 
@@ -316,7 +316,7 @@ namespace UD_BodyPlan_Selection.Mod.CharacterBuilds.UI
             var sB = Event.NewStringBuilder();
             bool isTK = module?.GenotypeModuleData?.Entry?.IsTrueKin ?? false;
 
-            if (Category?.GetChoices(AnatomyChoiceIsValid) is not IEnumerable<AnatomyChoice> choices
+            if (Category?.GetChoices(AnatomyChoiceIsValid) is not IEnumerable<BodyPlanEntry> choices
                 || (Category != null
                     && choices.IsNullOrEmpty()))
             {
@@ -364,7 +364,7 @@ namespace UD_BodyPlan_Selection.Mod.CharacterBuilds.UI
                 {
                     Utils.Log(category?.GetDisplayName());
                     if (!Utils.DisableDebug)
-                        foreach (var choice in category?.Choices ?? new List<AnatomyChoice>())
+                        foreach (var choice in category?.Choices ?? new List<BodyPlanEntry>())
                             Utils.Log($"    {choice?.Anatomy?.Name}");
 
                     if (category.IsValid(c => AnatomyChoices.Any(ch => ch?.Anatomy?.Name == c?.Anatomy?.Name)))

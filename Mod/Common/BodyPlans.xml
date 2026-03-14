@@ -1,59 +1,66 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <objects>
   
-  <object Name="UD_CYBP_BaseAnatomyTile" Inherits="DataBucket">
+  <object Name="UD_CYBP_BaseBodyPlanEntry" Inherits="DataBucket">
+    <tag Name="Anatomy" Value="UNDEFINED" />
     <tag Name="BaseObject" Value="*noinherit" />
   </object>
+  
+  <object Name="UD_CYBP_BaseRestrictedBodyPlan" Inherits="UD_CYBP_BaseBodyPlanEntry">
+    <tag Name="BaseObject" Value="*noinherit" />
+    <tag Name="Restricted" />
+  </object>
 
-  <object Name="UD_CYBP_AnatomyTile AirWell" Inherits="UD_CYBP_BaseAnatomyTile">
+  <object Name="UD_CYBP_BodyPlanEntry AirWell" Inherits="UD_CYBP_BaseBodyPlanEntry">
     <tag Name="Anatomy" Value="AirWell" />
     <tag Name="BasedOnBlueprint" Value="Air Well" />
     <part Name="Render" Tile="Items/sw_airwell.bmp" RenderString="233" ColorString="&amp;y" DetailColor="Y" />
   </object>
 
-  <object Name="UD_CYBP_AnatomyTile AnimalBed" Inherits="UD_CYBP_BaseAnatomyTile">
+  <object Name="UD_CYBP_BodyPlanEntry AnimalBed" Inherits="UD_CYBP_BaseBodyPlanEntry">
     <tag Name="Anatomy" Value="AnimalBed" />
     <tag Name="BasedOnBlueprint" Value="Bedger" />
     <part Name="Render" Tile="Items/sw_bed_bear.bmp" RenderString="240" ColorString="&amp;W" DetailColor="w" />
   </object>
 
-  <object Name="UD_CYBP_AnatomyTile AnimalChair" Inherits="UD_CYBP_BaseAnatomyTile">
+  <object Name="UD_CYBP_BodyPlanEntry AnimalChair" Inherits="UD_CYBP_BaseBodyPlanEntry">
     <tag Name="Anatomy" Value="AnimalChair" />
     <tag Name="BasedOnBlueprint" Value="Chairbear" />
     <part Name="Render" Tile="Items/sw_chair_bear.bmp" RenderString="190" ColorString="&amp;w" DetailColor="W" />
   </object>
 
-  <object Name="UD_CYBP_AnatomyTile Bed" Inherits="UD_CYBP_BaseAnatomyTile">
+  <object Name="UD_CYBP_BodyPlanEntry Bed" Inherits="UD_CYBP_BaseBodyPlanEntry">
     <tag Name="Anatomy" Value="Bed" />
     <tag Name="BasedOnBlueprint" Value="Bed" />
     <part Name="Render" Tile="Items/sw_bed.bmp" RenderString="240" ColorString="&amp;w" DetailColor="Y" />
   </object>
 
-  <object Name="UD_CYBP_AnatomyTile BipedalMechMk3" Inherits="UD_CYBP_BaseAnatomyTile">
+  <object Name="UD_CYBP_BodyPlanEntry BipedalMechMk3" Inherits="UD_CYBP_BaseBodyPlanEntry">
     <tag Name="Anatomy" Value="BipedalMechMk3" />
     <tag Name="BasedOnBlueprint" Value="VehicleTemplarMech3" />
     <part Name="Render" Tile="Creatures/sw_templar_mech_big.bmp" RenderString="@" ColorString="&amp;c" TileColor="&amp;c" DetailColor="r" />
   </object>
 
-  <object Name="UD_CYBP_AnatomyTile BipedalRobot" Inherits="UD_CYBP_BaseAnatomyTile">
+  <object Name="UD_CYBP_BodyPlanEntry BipedalRobot" Inherits="UD_CYBP_BaseBodyPlanEntry">
     <tag Name="Anatomy" Value="BipedalRobot" />
     <tag Name="BasedOnBlueprint" Value="Urn Porter" />
     <part Name="Render" Tile="creatures/sw_urnduster.bmp" RenderString="0" ColorString="&amp;y" DetailColor="Y" />
+    <tag Name="TextElements.Difficult" />
   </object>
 
-  <object Name="UD_CYBP_AnatomyTile BipedalRobotWithArmatures" Inherits="UD_CYBP_BaseAnatomyTile">
+  <object Name="UD_CYBP_BodyPlanEntry BipedalRobotWithArmatures" Inherits="UD_CYBP_BaseBodyPlanEntry">
     <tag Name="Anatomy" Value="BipedalRobotWithArmatures" />
     <tag Name="BasedOnBlueprint" Value="VehicleTemplarMech1" />
     <part Name="Render" Tile="Creatures/sw_templar_mech_2.bmp" RenderString="@" ColorString="&amp;c" TileColor="&amp;c" DetailColor="r" />
   </object>
 
-  <object Name="UD_CYBP_AnatomyTile Bird" Inherits="UD_CYBP_BaseAnatomyTile">
+  <object Name="UD_CYBP_BodyPlanEntry Bird" Inherits="UD_CYBP_BaseBodyPlanEntry">
     <tag Name="Anatomy" Value="Bird" />
     <tag Name="BasedOnBlueprint" Value="Glowcrow" />
     <part Name="Render" Tile="Creatures/sw_crow.bmp" RenderString="b" ColorString="&amp;m" DetailColor="w" />
   </object>
 
-  <object Name="UD_CYBP_AnatomyTile BoneWall" Inherits="UD_CYBP_BaseAnatomyTile">
+  <object Name="UD_CYBP_BodyPlanEntry BoneWall" Inherits="UD_CYBP_BaseBodyPlanEntry">
     <tag Name="Anatomy" Value="BoneWall" />
     <tag Name="BasedOnBlueprint" Value="CatacombWall_Override" />
     <part Name="Render" Tile="assets_content_textures_walls_wall_skull_1-00000000.png"
@@ -61,85 +68,87 @@
           TileColor="&amp;y" DetailColor="Y" />
   </object>
 
-  <object Name="UD_CYBP_AnatomyTile Bush" Inherits="UD_CYBP_BaseAnatomyTile">
+  <object Name="UD_CYBP_BodyPlanEntry Bush" Inherits="UD_CYBP_BaseBodyPlanEntry">
     <tag Name="Anatomy" Value="Bush" />
     <tag Name="BasedOnBlueprint" Value="Santalalotze" />
     <part Name="Render" Tile="creatures/sw_santalalotze.bmp" RenderString="12" ColorString="&amp;G" TileColor="&amp;G" DetailColor="M" />
   </object>
 
-  <object Name="UD_CYBP_AnatomyTile Cactus" Inherits="UD_CYBP_BaseAnatomyTile">
+  <object Name="UD_CYBP_BodyPlanEntry Cactus" Inherits="UD_CYBP_BaseBodyPlanEntry">
     <tag Name="Anatomy" Value="Cactus" />
     <tag Name="BasedOnBlueprint" Value="Sixshrew" />
     <part Name="Render" Tile="Items/sw_pottedplant_ornate_2.bmp" RenderString="234" ColorString="&amp;W" TileColor="&amp;g" DetailColor="W" />
   </object>
 
-  <object Name="UD_CYBP_AnatomyTile Chair" Inherits="UD_CYBP_BaseAnatomyTile">
+  <object Name="UD_CYBP_BodyPlanEntry Chair" Inherits="UD_CYBP_BaseBodyPlanEntry">
     <tag Name="Anatomy" Value="Chair" />
     <tag Name="BasedOnBlueprint" Value="Chair" />
     <part Name="Render" Tile="Items/sw_chair.bmp" RenderString="190" ColorString="&amp;w" DetailColor="y" />
   </object>
 
-  <object Name="UD_CYBP_AnatomyTile Chalkboard" Inherits="UD_CYBP_BaseAnatomyTile">
+  <object Name="UD_CYBP_BodyPlanEntry Chalkboard" Inherits="UD_CYBP_BaseBodyPlanEntry">
     <tag Name="Anatomy" Value="Chalkboard" />
     <tag Name="BasedOnBlueprint" Value="Chalkboard" />
     <part Name="Render" Tile="Items/sw_monster_whiteboard.bmp" RenderString="223" ColorString="&amp;K" TileColor="&amp;y" DetailColor="w" />
   </object>
 
-  <object Name="UD_CYBP_AnatomyTile Clam" Inherits="UD_CYBP_BaseAnatomyTile">
+  <object Name="UD_CYBP_BodyPlanEntry Clam" Inherits="UD_CYBP_BaseBodyPlanEntry">
     <tag Name="Anatomy" Value="Clam" />
     <tag Name="BasedOnBlueprint" Value="Giant Clam" />
     <part Name="Render" Tile="Creatures/sw_clam_1.bmp" RenderString="128" ColorString="&amp;Y" DetailColor="y" />
+    <tag Name="TextElements.Difficult" />
   </object>
 
-  <object Name="UD_CYBP_AnatomyTile ClothWall" Inherits="UD_CYBP_BaseAnatomyTile">
+  <object Name="UD_CYBP_BodyPlanEntry ClothWall" Inherits="UD_CYBP_BaseBodyPlanEntry">
     <tag Name="Anatomy" Value="ClothWall" />
     <tag Name="BasedOnBlueprint" Value="CanvasWall_Override" />
     <part Name="Render" Tile="assets_content_textures_tiles_tent_ew.bmp" RenderString="216" ColorString="&amp;w" DetailColor="r" />
   </object>
 
-  <object Name="UD_CYBP_AnatomyTile Crab" Inherits="UD_CYBP_BaseAnatomyTile">
+  <object Name="UD_CYBP_BodyPlanEntry Crab" Inherits="UD_CYBP_BaseBodyPlanEntry">
     <tag Name="Anatomy" Value="Crab" />
     <tag Name="BasedOnBlueprint" Value="Eyeless King Crab" />
     <part Name="Render" Tile="creatures/sw_kingcrab.bmp" RenderString="C" ColorString="&amp;Y" DetailColor="w" />
   </object>
 
-  <object Name="UD_CYBP_AnatomyTile Door" Inherits="UD_CYBP_BaseAnatomyTile">
+  <object Name="UD_CYBP_BodyPlanEntry Door" Inherits="UD_CYBP_BaseBodyPlanEntry">
     <tag Name="Anatomy" Value="Door" />
     <tag Name="BasedOnBlueprint" Value="Door" />
     <part Name="Render" Tile="Assets_Content_Textures_Tiles_sw_doorclosed.bmp" RenderString="+" ColorString="&amp;y" DetailColor="y" />
   </object>
 
-  <object Name="UD_CYBP_AnatomyTile Echinoid" Inherits="UD_CYBP_BaseAnatomyTile">
+  <object Name="UD_CYBP_BodyPlanEntry Echinoid" Inherits="UD_CYBP_BaseBodyPlanEntry">
     <tag Name="Anatomy" Value="Echinoid" />
     <tag Name="BasedOnBlueprint" Value="Junk Dollar" />
     <part Name="Render" Tile="Creatures/sw_urchin.bmp" RenderString="11" ColorString="&amp;W" DetailColor="c" />
+    <tag Name="TextElements.Difficult" />
   </object>
 
-  <object Name="UD_CYBP_AnatomyTile Fish" Inherits="UD_CYBP_BaseAnatomyTile">
+  <object Name="UD_CYBP_BodyPlanEntry Fish" Inherits="UD_CYBP_BaseBodyPlanEntry">
     <tag Name="Anatomy" Value="Fish" />
     <tag Name="BasedOnBlueprint" Value="Glowfish" />
     <part Name="Render" Tile="creatures\sw_glowfish.bmp" RenderString="224" ColorString="&amp;m" DetailColor="C" />
   </object>
 
-  <object Name="UD_CYBP_AnatomyTile Flower" Inherits="UD_CYBP_BaseAnatomyTile">
+  <object Name="UD_CYBP_BodyPlanEntry Flower" Inherits="UD_CYBP_BaseBodyPlanEntry">
     <tag Name="Anatomy" Value="Flower" />
     <tag Name="BasedOnBlueprint" Value="Glowpad" />
     <part Name="Render" Tile="creatures/sw_glowpad.bmp" RenderString="*" ColorString="&amp;m" DetailColor="g" />
   </object>
 
-  <object Name="UD_CYBP_AnatomyTile Frog" Inherits="UD_CYBP_BaseAnatomyTile">
+  <object Name="UD_CYBP_BodyPlanEntry Frog" Inherits="UD_CYBP_BaseBodyPlanEntry">
     <tag Name="Anatomy" Value="Frog" />
     <tag Name="BasedOnBlueprint" Value="Bloated Pearlfrog_Override" />
     <part Name="Render" Tile="Creatures/sw_giant_frog.bmp" RenderString="F" ColorString="&amp;Y" DetailColor="g" />
   </object>
 
-  <object Name="UD_CYBP_AnatomyTile Fungus" Inherits="UD_CYBP_BaseAnatomyTile">
+  <object Name="UD_CYBP_BodyPlanEntry Fungus" Inherits="UD_CYBP_BaseBodyPlanEntry">
     <tag Name="Anatomy" Value="Fungus" />
     <tag Name="BasedOnBlueprint" Value="FungusPuffer" />
     <part Name="Render" Tile="Creatures/sw_mushroom.bmp" RenderString="231" ColorString="&amp;C" DetailColor="M" />
   </object>
 
-  <object Name="UD_CYBP_AnatomyTile FungusWall" Inherits="UD_CYBP_BaseAnatomyTile">
+  <object Name="UD_CYBP_BodyPlanEntry FungusWall" Inherits="UD_CYBP_BaseBodyPlanEntry">
     <tag Name="Anatomy" Value="FungusWall" />
     <tag Name="BasedOnBlueprint" Value="MushroomWall-Red_Override" />
     <part Name="Render" Tile="assets_content_textures_walls_wall_mushroom-00000000.png"
@@ -147,73 +156,77 @@
           TileColor="&amp;r" DetailColor="R" />
   </object>
 
-  <object Name="UD_CYBP_AnatomyTile GlassWall" Inherits="UD_CYBP_BaseAnatomyTile">
+  <object Name="UD_CYBP_BodyPlanEntry GlassWall" Inherits="UD_CYBP_BaseBodyPlanEntry">
     <tag Name="Anatomy" Value="GlassWall" />
     <tag Name="BasedOnBlueprint" Value="GlassWall_Override" />
     <part Name="Render" Tile="assets_content_textures_tiles2_glass_.png" RenderString="215" ColorString="&amp;Y^k" DetailColor="y" />
   </object>
 
-  <object Name="UD_CYBP_AnatomyTile HexapedalRobot" Inherits="UD_CYBP_BaseAnatomyTile">
+  <object Name="UD_CYBP_BodyPlanEntry HexapedalRobot" Inherits="UD_CYBP_BaseBodyPlanEntry">
     <tag Name="Anatomy" Value="HexapedalRobot" />
     <tag Name="BasedOnBlueprint" Value="Random Turret Tinker" />
     <part Name="Render" Tile="Creatures/sw_turret_tinker.bmp" RenderString="6" ColorString="&amp;W" DetailColor="c" />
   </object>
 
-  <object Name="UD_CYBP_AnatomyTile Hexapod" Inherits="UD_CYBP_BaseAnatomyTile">
+  <object Name="UD_CYBP_BodyPlanEntry Hexapod" Inherits="UD_CYBP_BaseBodyPlanEntry">
     <tag Name="Anatomy" Value="Hexapod" />
     <tag Name="BasedOnBlueprint" Value="Kah" />
     <part Name="Render" Tile="creatures/sw_kah.bmp" RenderString="146" ColorString="&amp;M" DetailColor="c" />
   </object>
 
-  <object Name="UD_CYBP_AnatomyTile HoverRobot" Inherits="UD_CYBP_BaseAnatomyTile">
+  <object Name="UD_CYBP_BodyPlanEntry HoverRobot" Inherits="UD_CYBP_BaseBodyPlanEntry">
     <tag Name="Anatomy" Value="HoverRobot" />
     <tag Name="BasedOnBlueprint" Value="Waydroid" />
     <part Name="Render" Tile="Creatures/sw_waydroid.bmp" RenderString="2" ColorString="&amp;c" DetailColor="W" />
   </object>
 
-  <object Name="UD_CYBP_AnatomyTile HoverRobotWithFourArms" Inherits="UD_CYBP_BaseAnatomyTile">
+  <object Name="UD_CYBP_BodyPlanEntry HoverRobotWithFourArms" Inherits="UD_CYBP_BaseBodyPlanEntry">
     <tag Name="Anatomy" Value="HoverRobotWithFourArms" />
     <tag Name="BasedOnBlueprint" Value="Cloneling" />
     <part Name="Render" Tile="Creatures/sw_cloneling.bmp" RenderString="4" ColorString="&amp;c" DetailColor="C" />
   </object>
 
-  <object Name="UD_CYBP_AnatomyTile Humanoid" Inherits="UD_CYBP_BaseAnatomyTile">
+  <object Name="UD_CYBP_BodyPlanEntry Humanoid" Inherits="UD_CYBP_BaseBodyPlanEntry">
     <tag Name="Anatomy" Value="Humanoid" />
     <tag Name="BasedOnBlueprint" Value="Trash Monk" />
     <part Name="Render" Tile="creatures/sw_trash_monk.bmp" RenderString="h" ColorString="&amp;r" TileColor="&amp;y" DetailColor="r" />
   </object>
 
-  <object Name="UD_CYBP_AnatomyTile HumanoidOctohedron" Inherits="UD_CYBP_BaseAnatomyTile">
+  <object Name="UD_CYBP_BodyPlanEntry HumanoidOctohedron" Inherits="UD_CYBP_BaseBodyPlanEntry">
     <tag Name="Anatomy" Value="HumanoidOctohedron" />
     <tag Name="BasedOnBlueprint" Value="BaseTau" />
     <part Name="Render" Tile="Creatures/sw_tau_body.bmp" RenderString="198" ColorString="&amp;m" TileColor="&amp;b" DetailColor="m" />
   </object>
 
-  <object Name="UD_CYBP_AnatomyTile HumanoidRobot" Inherits="UD_CYBP_BaseAnatomyTile">
+  <object Name="UD_CYBP_BodyPlanEntry HumanoidRobot" Inherits="UD_CYBP_BaseBodyPlanEntry">
     <tag Name="Anatomy" Value="HumanoidRobot" />
     <tag Name="BasedOnBlueprint" Value="Shem -1" />
     <part Name="Render" Tile="Creatures/sw_chromeling_special.bmp" RenderString="1" ColorString="&amp;c" DetailColor="m" />
   </object>
 
-  <object Name="UD_CYBP_AnatomyTile Insect" Inherits="UD_CYBP_BaseAnatomyTile">
+  <object Name="UD_CYBP_BodyPlanEntry HumanoidWithHandsFace" Inherits="UD_CYBP_BaseRestrictedBodyPlan">
+    <tag Name="Anatomy" Value="HumanoidWithHandsFace" />
+  </object>
+
+  <object Name="UD_CYBP_BodyPlanEntry Insect" Inherits="UD_CYBP_BaseBodyPlanEntry">
     <tag Name="Anatomy" Value="Insect" />
     <tag Name="BasedOnBlueprint" Value="Beetlebum" />
     <part Name="Render" Tile="creatures/sw_beetle.bmp" RenderString="i" ColorString="&amp;B" TileColor="&amp;K" DetailColor="B" />
   </object>
 
-  <object Name="UD_CYBP_AnatomyTile IronMaiden" Inherits="UD_CYBP_BaseAnatomyTile">
+  <object Name="UD_CYBP_BodyPlanEntry IronMaiden" Inherits="UD_CYBP_BaseBodyPlanEntry">
     <tag Name="Anatomy" Value="IronMaiden" />
     <tag Name="BasedOnBlueprint" Value="Iron Maiden" />
     <part Name="Render" Tile="Items/sw_iron_maiden.bmp" RenderString="232" ColorString="&amp;K" DetailColor="y" />
   </object>
 
-  <object Name="UD_CYBP_AnatomyTile Jelly" Inherits="UD_CYBP_BaseAnatomyTile">
+  <object Name="UD_CYBP_BodyPlanEntry Jelly" Inherits="UD_CYBP_BaseBodyPlanEntry">
     <tag Name="Anatomy" Value="Jelly" />
     <tag Name="BasedOnBlueprint" Value="Plasma Jelly" />
     <part Name="Render" Tile="Creatures/sw_jelly.bmp" RenderString="J" ColorString="&amp;Y" DetailColor="g" />
   </object>
 
-  <object Name="UD_CYBP_AnatomyTile LeatherWall" Inherits="UD_CYBP_BaseAnatomyTile">
+  <object Name="UD_CYBP_BodyPlanEntry LeatherWall" Inherits="UD_CYBP_BaseBodyPlanEntry">
     <tag Name="Anatomy" Value="LeatherWall" />
     <tag Name="BasedOnBlueprint" Value="PigskinWall_Override" />
     <part Name="Render" Tile="assets_content_textures_tiles_wall_wood-00000000.bmp"
@@ -221,25 +234,25 @@
           TileColor="&amp;r" DetailColor="w" />
   </object>
 
-  <object Name="UD_CYBP_AnatomyTile MetalBed" Inherits="UD_CYBP_BaseAnatomyTile">
+  <object Name="UD_CYBP_BodyPlanEntry MetalBed" Inherits="UD_CYBP_BaseBodyPlanEntry">
     <tag Name="Anatomy" Value="MetalBed" />
     <tag Name="BasedOnBlueprint" Value="Hyperbiotic Bed" />
     <part Name="Render" Tile="Items/sw_bed_hyperbiotic.bmp" RenderString="240" ColorString="&amp;C" DetailColor="Y" />
   </object>
 
-  <object Name="UD_CYBP_AnatomyTile MetalChair" Inherits="UD_CYBP_BaseAnatomyTile">
+  <object Name="UD_CYBP_BodyPlanEntry MetalChair" Inherits="UD_CYBP_BaseBodyPlanEntry">
     <tag Name="Anatomy" Value="MetalChair" />
     <tag Name="BasedOnBlueprint" Value="FoldingChair_Override" />
     <part Name="Render" Tile="Items/sw_folding_chair.bmp" RenderString="190" ColorString="&amp;c" DetailColor="C" />
   </object>
 
-  <object Name="UD_CYBP_AnatomyTile MetalDoor" Inherits="UD_CYBP_BaseAnatomyTile">
+  <object Name="UD_CYBP_BodyPlanEntry MetalDoor" Inherits="UD_CYBP_BaseBodyPlanEntry">
     <tag Name="Anatomy" Value="MetalDoor" />
     <tag Name="BasedOnBlueprint" Value="Metal Door" />
     <part Name="Render" Tile="Tiles/sw_door_metal.bmp" RenderString="+" ColorString="&amp;y" TileColor="&amp;c" DetailColor="y" />
   </object>
 
-  <object Name="UD_CYBP_AnatomyTile MetalWall" Inherits="UD_CYBP_BaseAnatomyTile">
+  <object Name="UD_CYBP_BodyPlanEntry MetalWall" Inherits="UD_CYBP_BaseBodyPlanEntry">
     <tag Name="Anatomy" Value="MetalWall" />
     <tag Name="BasedOnBlueprint" Value="MetalWall_Override" />
     <part Name="Render" Tile="assets_content_textures_tiles_wall_metal-00000000.bmp"
@@ -247,49 +260,52 @@
           TileColor="&amp;c" DetailColor="C" />
   </object>
 
-  <object Name="UD_CYBP_AnatomyTile Mirror" Inherits="UD_CYBP_BaseAnatomyTile">
+  <object Name="UD_CYBP_BodyPlanEntry Mirror" Inherits="UD_CYBP_BaseBodyPlanEntry">
     <tag Name="Anatomy" Value="Mirror" />
     <tag Name="BasedOnBlueprint" Value="Quartziferous Mirror" />
     <part Name="Render" Tile="Creatures/sw_mirror.bmp" RenderString="15" ColorString="&amp;K" DetailColor="Y" />
+    <tag Name="TextElements.Difficult" />
   </object>
 
-  <object Name="UD_CYBP_AnatomyTile Motes" Inherits="UD_CYBP_BaseAnatomyTile">
+  <object Name="UD_CYBP_BodyPlanEntry Motes" Inherits="UD_CYBP_BaseBodyPlanEntry">
     <tag Name="Anatomy" Value="Motes" />
     <tag Name="BasedOnBlueprint" Value="Mote Cloud" />
     <part Name="Render" Tile="Creatures/sw_mote_cloud.bmp" RenderString="176" ColorString="&amp;B" DetailColor="M" />
+    <tag Name="TextElements.Difficult" />
   </object>
 
-  <object Name="UD_CYBP_AnatomyTile Nest" Inherits="UD_CYBP_BaseAnatomyTile">
+  <object Name="UD_CYBP_BodyPlanEntry Nest" Inherits="UD_CYBP_BaseBodyPlanEntry">
     <tag Name="Anatomy" Value="Nest" />
     <tag Name="BasedOnBlueprint" Value="Giant Centipede Nest" />
     <part Name="Render" Tile="Creatures/sw_nest.bmp" RenderString="15" ColorString="&amp;w" DetailColor="r" />
+    <tag Name="TextElements.Difficult" />
   </object>
 
-  <object Name="UD_CYBP_AnatomyTile Octohedron" Inherits="UD_CYBP_BaseAnatomyTile">
+  <object Name="UD_CYBP_BodyPlanEntry Octohedron" Inherits="UD_CYBP_BaseBodyPlanEntry">
     <tag Name="Anatomy" Value="Octohedron" />
     <tag Name="BasedOnBlueprint" Value="Recall Star" />
     <part Name="Render" Tile="Creatures/sw_recall_star.bmp" RenderString="@" ColorString="&amp;B" DetailColor="M" />
   </object>
 
-  <object Name="UD_CYBP_AnatomyTile Oddity" Inherits="UD_CYBP_BaseAnatomyTile">
+  <object Name="UD_CYBP_BodyPlanEntry Oddity" Inherits="UD_CYBP_BaseBodyPlanEntry">
     <tag Name="Anatomy" Value="Oddity" />
     <tag Name="BasedOnBlueprint" Value="default" />
     <part Name="Render" Tile="Creatures/sw_mimic.bmp" RenderString="*" ColorString="&amp;w^y" TileColor="&amp;w" DetailColor="y" />
   </object>
 
-  <object Name="UD_CYBP_AnatomyTile Ooze" Inherits="UD_CYBP_BaseAnatomyTile">
+  <object Name="UD_CYBP_BodyPlanEntry Ooze" Inherits="UD_CYBP_BaseBodyPlanEntry">
     <tag Name="Anatomy" Value="Ooze" />
     <tag Name="BasedOnBlueprint" Value="Purple Jell" />
     <part Name="Render" Tile="Creatures/sw_amoeba.bmp" RenderString="j" ColorString="&amp;m" DetailColor="G" />
   </object>
 
-  <object Name="UD_CYBP_AnatomyTile Pillow" Inherits="UD_CYBP_BaseAnatomyTile">
+  <object Name="UD_CYBP_BodyPlanEntry Pillow" Inherits="UD_CYBP_BaseBodyPlanEntry">
     <tag Name="Anatomy" Value="Pillow" />
     <tag Name="BasedOnBlueprint" Value="Floor Cushion" />
     <part Name="Render" Tile="Items/sw_floor_cushion.png" RenderString="009" ColorString="&amp;w" DetailColor="y" />
   </object>
 
-  <object Name="UD_CYBP_AnatomyTile PlantWall" Inherits="UD_CYBP_BaseAnatomyTile">
+  <object Name="UD_CYBP_BodyPlanEntry PlantWall" Inherits="UD_CYBP_BaseBodyPlanEntry">
     <tag Name="Anatomy" Value="PlantWall" />
     <tag Name="BasedOnBlueprint" Value="PlantWall_Override" />
     <part Name="Render" Tile="assets_content_textures_tiles_wall_plant-00000000.png"
@@ -297,151 +313,155 @@
           TileColor="&amp;w" DetailColor="g" />
   </object>
 
-  <object Name="UD_CYBP_AnatomyTile PlasticBed" Inherits="UD_CYBP_BaseAnatomyTile">
+  <object Name="UD_CYBP_BodyPlanEntry PlasticBed" Inherits="UD_CYBP_BaseBodyPlanEntry">
     <tag Name="Anatomy" Value="PlasticBed" />
     <tag Name="BasedOnBlueprint" Value="Medical Bed" />
     <part Name="Render" Tile="Items/sw_bed_medical.bmp" RenderString="240" ColorString="&amp;c" TileColor="&amp;C" DetailColor="Y" />
   </object>
 
-  <object Name="UD_CYBP_AnatomyTile PlasticChair" Inherits="UD_CYBP_BaseAnatomyTile">
+  <object Name="UD_CYBP_BodyPlanEntry PlasticChair" Inherits="UD_CYBP_BaseBodyPlanEntry">
     <tag Name="Anatomy" Value="PlasticChair" />
     <tag Name="BasedOnBlueprint" Value="Work Chair" />
     <part Name="Render" Tile="Items/sw_chair_work.bmp" RenderString="190" ColorString="&amp;K" DetailColor="y" />
   </object>
 
-  <object Name="UD_CYBP_AnatomyTile Pottery" Inherits="UD_CYBP_BaseAnatomyTile">
+  <object Name="UD_CYBP_BodyPlanEntry Pottery" Inherits="UD_CYBP_BaseBodyPlanEntry">
     <tag Name="Anatomy" Value="Pottery" />
     <tag Name="BasedOnBlueprint" Value="Jug Eastern Style_Override" />
     <part Name="Render" Tile="Items/sw_jug6.bmp" RenderString="168" ColorString="&amp;w" DetailColor="r" />
   </object>
 
-  <object Name="UD_CYBP_AnatomyTile Quadruped" Inherits="UD_CYBP_BaseAnatomyTile">
+  <object Name="UD_CYBP_BodyPlanEntry Quadruped" Inherits="UD_CYBP_BaseBodyPlanEntry">
     <tag Name="Anatomy" Value="Quadruped" />
     <tag Name="BasedOnBlueprint" Value="Boar" />
     <part Name="Render" Tile="creatures/sw_boar.bmp" RenderString="o" ColorString="&amp;w" DetailColor="y" />
   </object>
 
-  <object Name="UD_CYBP_AnatomyTile QuadrupedalRobot" Inherits="UD_CYBP_BaseAnatomyTile">
+  <object Name="UD_CYBP_BodyPlanEntry QuadrupedalRobot" Inherits="UD_CYBP_BaseBodyPlanEntry">
     <tag Name="Anatomy" Value="QuadrupedalRobot" />
     <tag Name="BasedOnBlueprint" Value="Miner Mk II" />
     <part Name="Render" Tile="Creatures/sw_miner.bmp" RenderString="4" ColorString="&amp;g" TileColor="&amp;c" DetailColor="W" />
   </object>
 
-  <object Name="UD_CYBP_AnatomyTile RailedMechanism" Inherits="UD_CYBP_BaseAnatomyTile">
+  <object Name="UD_CYBP_BodyPlanEntry RailedMechanism" Inherits="UD_CYBP_BaseBodyPlanEntry">
     <tag Name="Anatomy" Value="RailedMechanism" />
     <tag Name="BasedOnBlueprint" Value="Millstone" />
     <part Name="Render" Tile="Items/sw_millstone_1.bmp" RenderString="15" ColorString="&amp;y" DetailColor="w" />
   </object>
 
-  <object Name="UD_CYBP_AnatomyTile RockingChair" Inherits="UD_CYBP_BaseAnatomyTile">
+  <object Name="UD_CYBP_BodyPlanEntry RockingChair" Inherits="UD_CYBP_BaseBodyPlanEntry">
     <tag Name="Anatomy" Value="RockingChair" />
     <tag Name="BasedOnBlueprint" Value="Ercolano" />
     <part Name="Render" Tile="Items/sw_chair_rocking.bmp" RenderString="190" ColorString="&amp;w" DetailColor="y" />
   </object>
 
-  <object Name="UD_CYBP_AnatomyTile Slug" Inherits="UD_CYBP_BaseAnatomyTile">
+  <object Name="UD_CYBP_BodyPlanEntry Slug" Inherits="UD_CYBP_BaseBodyPlanEntry">
     <tag Name="Anatomy" Value="Slug" />
     <tag Name="BasedOnBlueprint" Value="Ickslug" />
     <part Name="Render" Tile="creatures/sw_slug.bmp" RenderString="q" ColorString="&amp;m" DetailColor="B" />
+    <tag Name="TextElements.Difficult" />
   </object>
 
-  <object Name="UD_CYBP_AnatomyTile SlugWithHands" Inherits="UD_CYBP_BaseAnatomyTile">
+  <object Name="UD_CYBP_BodyPlanEntry SlugWithHands" Inherits="UD_CYBP_BaseBodyPlanEntry">
     <tag Name="Anatomy" Value="SlugWithHands" />
     <tag Name="BasedOnBlueprint" Value="CloacaSurprise" />
     <part Name="Render" Tile="Creatures/sw_slog.bmp" RenderString="Q" ColorString="&amp;M^G" TileColor="&amp;M" DetailColor="G" />
   </object>
 
-  <object Name="UD_CYBP_AnatomyTile SmallProblems" Inherits="UD_CYBP_BaseAnatomyTile">
+  <object Name="UD_CYBP_BodyPlanEntry SmallProblems" Inherits="UD_CYBP_BaseBodyPlanEntry">
     <tag Name="Anatomy" Value="SmallProblems" />
     <tag Name="BasedOnBlueprint" Value="Small Problems" />
     <part Name="Render" Tile="Creatures/sw_three_headed_fungi.bmp" RenderString="@" ColorString="&amp;w" DetailColor="W" />
   </object>
 
-  <object Name="UD_CYBP_AnatomyTile Snail" Inherits="UD_CYBP_BaseAnatomyTile">
+  <object Name="UD_CYBP_BodyPlanEntry Snail" Inherits="UD_CYBP_BaseBodyPlanEntry">
     <tag Name="Anatomy" Value="Snail" />
     <tag Name="BasedOnBlueprint" Value="Electric Snail" />
     <part Name="Render" Tile="creatures/sw_snail.bmp" RenderString="q" ColorString="&amp;W" DetailColor="B" />
+    <tag Name="TextElements.Difficult" />
   </object>
 
-  <object Name="UD_CYBP_AnatomyTile Snake" Inherits="UD_CYBP_BaseAnatomyTile">
+  <object Name="UD_CYBP_BodyPlanEntry Snake" Inherits="UD_CYBP_BaseBodyPlanEntry">
     <tag Name="Anatomy" Value="Snake" />
     <tag Name="BasedOnBlueprint" Value="Dawnglider" />
     <part Name="Render" Tile="creatures/sw_dawnglider.bmp" RenderString="r" ColorString="&amp;G" DetailColor="W" />
+    <tag Name="TextElements.Difficult" />
   </object>
 
-  <object Name="UD_CYBP_AnatomyTile Spider" Inherits="UD_CYBP_BaseAnatomyTile">
+  <object Name="UD_CYBP_BodyPlanEntry Spider" Inherits="UD_CYBP_BaseBodyPlanEntry">
     <tag Name="Anatomy" Value="Spider" />
     <tag Name="BasedOnBlueprint" Value="Greater Voider" />
     <part Name="Render" Tile="creatures/sw_greater_voider.bmp" RenderString="X" ColorString="&amp;B" DetailColor="y" />
   </object>
 
-  <object Name="UD_CYBP_AnatomyTile Star" Inherits="UD_CYBP_BaseAnatomyTile">
+  <object Name="UD_CYBP_BodyPlanEntry Star" Inherits="UD_CYBP_BaseBodyPlanEntry">
     <tag Name="Anatomy" Value="Star" />
     <tag Name="BasedOnBlueprint" Value="Star Kraken" />
     <part Name="Render" Tile="Creatures/sw_star_kraken.bmp" RenderString="W" ColorString="&amp;m" TileColor="&amp;M" DetailColor="m" />
   </object>
 
-  <object Name="UD_CYBP_AnatomyTile Svardym" Inherits="UD_CYBP_BaseAnatomyTile">
+  <object Name="UD_CYBP_BodyPlanEntry Svardym" Inherits="UD_CYBP_BaseBodyPlanEntry">
     <tag Name="Anatomy" Value="Svardym" />
     <tag Name="BasedOnBlueprint" Value="Bep" />
     <part Name="Render" Tile="Creatures/sw_yd_svardym_1.bmp" RenderString="f" ColorString="&amp;g" TileColor="&amp;g" DetailColor="w" />
   </object>
 
-  <object Name="UD_CYBP_AnatomyTile Table" Inherits="UD_CYBP_BaseAnatomyTile">
+  <object Name="UD_CYBP_BodyPlanEntry Table" Inherits="UD_CYBP_BaseBodyPlanEntry">
     <tag Name="Anatomy" Value="Table" />
     <tag Name="BasedOnBlueprint" Value="Table" />
     <part Name="Render" Tile="Assets_Content_Textures_Tiles_sw_table.bmp" RenderString="227" ColorString="&amp;w" DetailColor="C" />
   </object>
 
-  <object Name="UD_CYBP_AnatomyTile TailedBiped" Inherits="UD_CYBP_BaseAnatomyTile">
+  <object Name="UD_CYBP_BodyPlanEntry TailedBiped" Inherits="UD_CYBP_BaseBodyPlanEntry">
     <tag Name="Anatomy" Value="TailedBiped" />
     <tag Name="BasedOnBlueprint" Value="MopangoPilgrim" />
     <part Name="Render" Tile="creatures/sw_mopango_villager.bmp" RenderString="v" ColorString="&amp;w" DetailColor="y" />
   </object>
 
-  <object Name="UD_CYBP_AnatomyTile Three-Pointed Star" Inherits="UD_CYBP_BaseAnatomyTile">
+  <object Name="UD_CYBP_BodyPlanEntry Three-Pointed Star" Inherits="UD_CYBP_BaseBodyPlanEntry">
     <tag Name="Anatomy" Value="Three-Pointed Star" />
     <tag Name="BasedOnBlueprint" Value="Monad" />
     <part Name="Render" Tile="Creatures/sw_monad.bmp" RenderString="031" ColorString="&amp;Y" DetailColor="m" />
   </object>
 
-  <object Name="UD_CYBP_AnatomyTile TreadedRobot" Inherits="UD_CYBP_BaseAnatomyTile">
+  <object Name="UD_CYBP_BodyPlanEntry TreadedRobot" Inherits="UD_CYBP_BaseBodyPlanEntry">
     <tag Name="Anatomy" Value="TreadedRobot" />
     <tag Name="BasedOnBlueprint" Value="Warden 1-FF" />
     <part Name="Render" Tile="Creatures/sw_tombbot_large_2.bmp" RenderString="6" ColorString="&amp;B" TileColor="&amp;B" DetailColor="C" />
   </object>
 
-  <object Name="UD_CYBP_AnatomyTile Tree" Inherits="UD_CYBP_BaseAnatomyTile">
+  <object Name="UD_CYBP_BodyPlanEntry Tree" Inherits="UD_CYBP_BaseBodyPlanEntry">
     <tag Name="Anatomy" Value="Tree" />
     <tag Name="BasedOnBlueprint" Value="Haddas" />
     <part Name="Render" Tile="Terrain/sw_bigtree1.bmp" RenderString="157" ColorString="&amp;r" DetailColor="w" />
   </object>
 
-  <object Name="UD_CYBP_AnatomyTile TripedalRobot" Inherits="UD_CYBP_BaseAnatomyTile">
+  <object Name="UD_CYBP_BodyPlanEntry TripedalRobot" Inherits="UD_CYBP_BaseBodyPlanEntry">
     <tag Name="Anatomy" Value="TripedalRobot" />
     <tag Name="BasedOnBlueprint" Value="Crypt Sitter" />
     <part Name="Render" Tile="Creatures/sw_orb_legged.bmp" RenderString="7" ColorString="&amp;c" DetailColor="Y" />
   </object>
 
-  <object Name="UD_CYBP_AnatomyTile Turret" Inherits="UD_CYBP_BaseAnatomyTile">
+  <object Name="UD_CYBP_BodyPlanEntry Turret" Inherits="UD_CYBP_BaseBodyPlanEntry">
     <tag Name="Anatomy" Value="Turret" />
     <tag Name="BasedOnBlueprint" Value="Vivira" />
     <part Name="Render" Tile="Creatures/sw_chainlaser_emplacement.bmp" RenderString="5" ColorString="&amp;M" DetailColor="C" />
+    <tag Name="TextElements.Difficult" />
   </object>
 
-  <object Name="UD_CYBP_AnatomyTile VanedMechanism" Inherits="UD_CYBP_BaseAnatomyTile">
+  <object Name="UD_CYBP_BodyPlanEntry VanedMechanism" Inherits="UD_CYBP_BaseBodyPlanEntry">
     <tag Name="Anatomy" Value="VanedMechanism" />
     <tag Name="BasedOnBlueprint" Value="Broadcast Power Station" />
     <part Name="Render" Tile="Items/sw_broadcast_station.bmp" RenderString="157" ColorString="&amp;y" DetailColor="Y" />
   </object>
 
-  <object Name="UD_CYBP_AnatomyTile Vine" Inherits="UD_CYBP_BaseAnatomyTile">
+  <object Name="UD_CYBP_BodyPlanEntry Vine" Inherits="UD_CYBP_BaseBodyPlanEntry">
     <tag Name="Anatomy" Value="Vine" />
     <tag Name="BasedOnBlueprint" Value="Tillifergaewicz" />
     <part Name="Render" Tile="Creatures/sw_tillifergaewicz.bmp" RenderString="12" ColorString="&amp;G" TileColor="&amp;G" DetailColor="W" />
   </object>
 
-  <object Name="UD_CYBP_AnatomyTile Wall" Inherits="UD_CYBP_BaseAnatomyTile">
+  <object Name="UD_CYBP_BodyPlanEntry Wall" Inherits="UD_CYBP_BaseBodyPlanEntry">
     <tag Name="Anatomy" Value="Wall" />
     <tag Name="BasedOnBlueprint" Value="Fulcrete" />
     <part Name="Render" Tile="assets_content_textures_tiles_wall_mud-00000000.bmp"
@@ -449,31 +469,31 @@
           TileColor="&amp;Y" DetailColor="k" />
   </object>
 
-  <object Name="UD_CYBP_AnatomyTile WheeledCreature" Inherits="UD_CYBP_BaseAnatomyTile">
+  <object Name="UD_CYBP_BodyPlanEntry WheeledCreature" Inherits="UD_CYBP_BaseBodyPlanEntry">
     <tag Name="Anatomy" Value="WheeledCreature" />
     <tag Name="BasedOnBlueprint" Value="MopangoCharioteer" />
     <part Name="Render" Tile="creatures/sw_mopango_rider.bmp" RenderString="v" ColorString="&amp;w" DetailColor="y" />
   </object>
 
-  <object Name="UD_CYBP_AnatomyTile WheeledRobot" Inherits="UD_CYBP_BaseAnatomyTile">
+  <object Name="UD_CYBP_BodyPlanEntry WheeledRobot" Inherits="UD_CYBP_BaseBodyPlanEntry">
     <tag Name="Anatomy" Value="WheeledRobot" />
     <tag Name="BasedOnBlueprint" Value="default" />
     <part Name="Render" Tile="Creatures/sw_mimic.bmp" RenderString="*" ColorString="&amp;w^y" TileColor="&amp;w" DetailColor="y" />
   </object>
 
-  <object Name="UD_CYBP_AnatomyTile WheelRobot" Inherits="UD_CYBP_BaseAnatomyTile">
+  <object Name="UD_CYBP_BodyPlanEntry WheelRobot" Inherits="UD_CYBP_BaseBodyPlanEntry">
     <tag Name="Anatomy" Value="WheelRobot" />
     <tag Name="BasedOnBlueprint" Value="Galgal" />
     <part Name="Render" Tile="Creatures/sw_galgal_1.bmp" RenderString="8" ColorString="&amp;m" TileColor="&amp;c" DetailColor="R" />
   </object>
 
-  <object Name="UD_CYBP_AnatomyTile WoodenHumanoid" Inherits="UD_CYBP_BaseAnatomyTile">
+  <object Name="UD_CYBP_BodyPlanEntry WoodenHumanoid" Inherits="UD_CYBP_BaseBodyPlanEntry">
     <tag Name="Anatomy" Value="WoodenHumanoid" />
     <tag Name="BasedOnBlueprint" Value="Mannequin" />
     <part Name="Render" Tile="Items/sw_mannequin.bmp" RenderString="h" ColorString="&amp;y" DetailColor="R" />
   </object>
 
-  <object Name="UD_CYBP_AnatomyTile WoodWall" Inherits="UD_CYBP_BaseAnatomyTile">
+  <object Name="UD_CYBP_BodyPlanEntry WoodWall" Inherits="UD_CYBP_BaseBodyPlanEntry">
     <tag Name="Anatomy" Value="WoodWall" />
     <tag Name="BasedOnBlueprint" Value="WoodWall_Override" />
     <part Name="Render" Tile="assets_content_textures_tiles_wall_wood-00000000.bmp"
@@ -481,9 +501,10 @@
           TileColor="&amp;w" DetailColor="y" />
   </object>
 
-  <object Name="UD_CYBP_AnatomyTile Worm" Inherits="UD_CYBP_BaseAnatomyTile">
+  <object Name="UD_CYBP_BodyPlanEntry Worm" Inherits="UD_CYBP_BaseBodyPlanEntry">
     <tag Name="Anatomy" Value="WormWorm" />
     <tag Name="BasedOnBlueprint" Value="Saltwurm" />
     <part Name="Render" Tile="Creatures/sw_kraken.bmp" RenderString="W" ColorString="&amp;Y" DetailColor="y" />
+    <tag Name="TextElements.Difficult" />
   </object>
 </objects>

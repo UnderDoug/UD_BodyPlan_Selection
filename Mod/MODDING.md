@@ -156,9 +156,9 @@ In the absence of any display data, the Body Plan Module will scan the game's bl
 
 This can be a little intense, and more than a handful of anatomies doing this can cause the game to hang for several seconds when first selecting `[+] New` at the start of character creation.
 
-Choose Your Body Plan uses a wish, `UD_BPS anatomy tile tags with names` to output to `AnatomyTiles.xml` in the save directory, every blueprint that could be selected as the basis for display data, pre-formatted to use directly, but commented out individually.
+Choose Your Body Plan uses a wish, `UD_BPS anatomy tile tags with names` to output to `BodyPlanEntrys.xml` in the save directory, every blueprint that could be selected as the basis for display data, pre-formatted to use directly, but commented out individually.
 
-You can use `UD_BPS anatomy tile tags with names @FullAnatomyName` using the same rules as for the `xtag` (spaces and hyphens replaced with `_`) to get a ready to use `AnatomyTiles.xml` with only entries for the specified anatomy. Simply remove the comment syntax from the desired line and paste the file into your mod directory.
+You can use `UD_BPS anatomy tile tags with names @FullAnatomyName` using the same rules as for the `xtag` (spaces and hyphens replaced with `_`) to get a ready to use `BodyPlanEntrys.xml` with only entries for the specified anatomy. Simply remove the comment syntax from the desired line and paste the file into your mod directory.
 
 The player's genotype/subtype selection will override the tile of whichever anatomy that combination's body object would otherwise have.
 
@@ -172,13 +172,13 @@ Note: Transformations are flipped by default, so that they reflect what the play
 
 Adding display data for your anatomy is even more straight forward than restricting its selection.
 
-Again in `Data.xml` (although the mod uses `AnatomyTiles.xml`, so feel free), you want merge into the blueprint `UD_BodyPlan_Slection_AnatomyTiles`.
+Again in `Data.xml` (although the mod uses `BodyPlanEntrys.xml`, so feel free), you want merge into the blueprint `UD_BodyPlan_Slection_BodyPlanEntrys`.
 
 You then want an `xtag` with the following element name: `xtagUD_BDS_FullAnatomyName`. Start with `xtag`, followed by `UD_BDS_`, and then the full name of the anatomy (replace any spaces or hyphens with an `_`).
 
 Finally, you can treat the `xtag` as though it's a `Render` `IPart` (`<part Name="Render" ... />`), but only for the visual data.
 
-    <object Name="UD_BodyPlan_Slection_AnatomyTiles" Load="Merge">
+    <object Name="UD_BodyPlan_Slection_BodyPlanEntrys" Load="Merge">
         <xtagUD_BDS_YourModPrefix_CustomAnatomy
             Blueprint="YourModPrefix_WonkyBoi"
             Tile="Creatures/yourmodprefix_wonkyboi.png"

@@ -1,4 +1,4 @@
-﻿namespace UD_BodyPlan_Selection.Mod
+﻿namespace UD_ChooseYourBodyPlan.Mod
 {
     public static partial class Utils
     {

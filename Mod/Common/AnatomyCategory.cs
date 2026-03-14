@@ -7,10 +7,10 @@ using XRL.Collections;
 using XRL.World;
 using XRL.World.Anatomy;
 
-namespace UD_BodyPlan_Selection.Mod
+namespace UD_ChooseYourBodyPlan.Mod
 {
     [HasModSensitiveStaticCache]
-    public class AnatomyCategory : IDisposable
+    public class AnatomyCategory : ILoadFromDataBucket<AnatomyCategory>, IDisposable
     {
         public struct TextShader
         {
@@ -214,7 +214,7 @@ namespace UD_BodyPlan_Selection.Mod
                             Utils.Log($"{dataBucket.Name}, {category.CategoryName}: Added with ID {category.ID}", Indent: 2);
                         }
                     }
-                    Utils.AnatomyChoices?.ForEach(c => _ = c?.Category);
+                    Utils.BodyPlanEntries?.ForEach(c => _ = c?.Category);
 
                     Utils.Log("Final Categories:");
                     _CategoryByID.Values.ToList()
@@ -269,7 +269,7 @@ namespace UD_BodyPlan_Selection.Mod
             return null;
         }
 
-        public static AnatomyCategory GetFor(AnatomyChoice Choice)
+        public static AnatomyCategory GetFor(BodyPlanEntry Choice)
         {
             if (Choice == null)
                 throw new ArgumentNullException(nameof(Choice));
@@ -311,7 +311,7 @@ namespace UD_BodyPlan_Selection.Mod
             return category;
         }
 
-        public static bool TryGetFor(AnatomyChoice Choice, out AnatomyCategory Category)
+        public static bool TryGetFor(BodyPlanEntry Choice, out AnatomyCategory Category)
         {
             Category = null;
 
@@ -332,7 +332,7 @@ namespace UD_BodyPlan_Selection.Mod
         public string DisplayName;
         public TextShader Shader;
 
-        public List<AnatomyChoice> Choices;
+        public List<BodyPlanEntry> Choices;
 
         public AnatomyCategory()
         {
@@ -400,19 +400,19 @@ namespace UD_BodyPlan_Selection.Mod
         public string GetDisplayName()
             => Shader.Apply(DisplayName);
 
-        public bool IsValid(Predicate<AnatomyChoice> Filter = null)
+        public bool IsValid(Predicate<BodyPlanEntry> Filter = null)
             => !DisplayName.IsNullOrEmpty()
-            && GetChoices() is IEnumerable<AnatomyChoice> choices
+            && GetChoices() is IEnumerable<BodyPlanEntry> choices
             && !choices.IsNullOrEmpty()
             && (Filter == null
                 || choices.Any(Filter.Invoke))
             ;
 
-        public bool IsDefaultMatching(AnatomyChoice Choice)
+        public bool IsDefaultMatching(BodyPlanEntry Choice)
             => Choice != null
             && (ID == 0) == Choice.IsDefault;
 
-        public IEnumerable<AnatomyChoice> GetChoices(Predicate<AnatomyChoice> Filter = null)
+        public IEnumerable<BodyPlanEntry> GetChoices(Predicate<BodyPlanEntry> Filter = null)
         {
             if (Choices.IsNullOrEmpty())
                 yield break;
@@ -431,7 +431,7 @@ namespace UD_BodyPlan_Selection.Mod
             }
         }
 
-        public void RequireChoice(AnatomyChoice Choice)
+        public void RequireChoice(BodyPlanEntry Choice)
         {
             if (Choice != null
                 && !Choices.Any(c => c?.Anatomy?.Name == Choice?.Anatomy?.Name))

@@ -10,12 +10,12 @@ using XRL.World;
 using XRL.World.Anatomy;
 using XRL.World.Parts;
 
-using static UD_BodyPlan_Selection.Mod.Utils;
-using static UD_BodyPlan_Selection.Mod.Const;
+using static UD_ChooseYourBodyPlan.Mod.Utils;
+using static UD_ChooseYourBodyPlan.Mod.Const;
 using System.Collections.Concurrent;
 using XRL.Collections;
 
-namespace UD_BodyPlan_Selection.Mod
+namespace UD_ChooseYourBodyPlan.Mod
 {
     public static class Extensions
     {
@@ -259,7 +259,7 @@ namespace UD_BodyPlan_Selection.Mod
                 Indent: Indent);
         }
 
-        public static StreamWriter WriteAnatomyTileObjectBlueprint(
+        public static StreamWriter WriteBodyPlanEntryBlueprint(
             this StreamWriter Writer,
             string NamePrefix,
             string AnatomyName,

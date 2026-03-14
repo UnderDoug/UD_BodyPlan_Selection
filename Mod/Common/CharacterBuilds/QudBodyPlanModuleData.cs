@@ -1,9 +1,9 @@
 ﻿using XRL.CharacterBuilds;
 using XRL.World.Anatomy;
 
-using static UD_BodyPlan_Selection.Mod.AnatomyConfiguration;
+using static UD_ChooseYourBodyPlan.Mod.AnatomyConfiguration;
 
-namespace UD_BodyPlan_Selection.Mod.CharacterBuilds
+namespace UD_ChooseYourBodyPlan.Mod.CharacterBuilds
 {
     public class QudBodyPlanModuleData : AbstractEmbarkBuilderModuleData
     {
@@ -28,7 +28,7 @@ namespace UD_BodyPlan_Selection.Mod.CharacterBuilds
             : this(Selection?.Name, Transformation)
         { }
 
-        public QudBodyPlanModuleData(AnatomyChoice Selection)
+        public QudBodyPlanModuleData(BodyPlanEntry Selection)
             : this(Selection?.Anatomy, Selection?.AnatomyConfigurations?.FirstTransformationOrDefault())
         { }
     }

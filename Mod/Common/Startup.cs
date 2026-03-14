@@ -1,7 +1,7 @@
 ﻿using XRL;
 using XRL.World;
 
-namespace UD_BodyPlan_Selection.Mod
+namespace UD_ChooseYourBodyPlan.Mod
 {
     [HasModSensitiveStaticCache]
     [HasGameBasedStaticCache]

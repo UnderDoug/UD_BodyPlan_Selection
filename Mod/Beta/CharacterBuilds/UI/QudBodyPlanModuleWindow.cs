@@ -2,7 +2,7 @@
 using XRL.Rules;
 using XRL.UI.Framework;
 
-namespace UD_BodyPlan_Selection.Mod.CharacterBuilds.UI
+namespace UD_ChooseYourBodyPlan.Mod.CharacterBuilds.UI
 {
     public partial class QudBodyPlanModuleWindow : EmbarkBuilderModuleWindowPrefabBase<QudBodyPlanModule, CategoryMenusScroller>
     {

@@ -1,0 +1,35 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<objects>
+  <object Name="UD_CYBP_BaseTextElements" Inherits="DataBucket">
+    <tag Name="TextElements" Value="UNDEFINED" />
+    <tag Name="BaseObject" Value="*noinherit" />
+  </object>
+  
+  <object Name="UD_CYBP_TextElements Difficult" Inherits="UD_CYBP_BaseTextElement">
+    <tag Name="TextElements" Value="Difficult" />
+    <tag Name="DescriptionAddition" Value="This body plan will be {{r|difficult}} to play with." />
+    <tag Name="SummaryAddition" Value="{{r|Difficult to play}}" />
+    <xtagUD_CYBP_Symbols Difficult="r::&#x13;" />
+  </object>
+  
+  <object Name="UD_CYBP_TextElements Transformation" Inherits="UD_CYBP_BaseTextElement">
+    <tag Name="TextElements" Value="Transformation" />
+    <tag Name="DescriptionAddition" Value="This body plan will be {{r|difficult}} to play with." />
+    <tag Name="SummaryAddition" Value="{{r|Difficult to play}}" />
+    <xtagUD_CYBP_Symbols Transformation="r::&#x13;" />
+  </object>
+  
+  <object Name="UD_CYBP_TextElements Mechanical" Inherits="UD_CYBP_BaseTextElement">
+    <tag Name="TextElements" Value="Mechanical" />
+    <tag Name="DescriptionAddition" Value="This body plan will be {{r|difficult}} to play with." />
+    <tag Name="SummaryAddition" Value="{{r|Difficult to play}}" />
+    <xtagUD_CYBP_Symbols Mechanical="r::&#x13;" />
+  </object>
+  
+  <object Name="UD_CYBP_TextElements NoCyber" Inherits="UD_CYBP_BaseTextElement">
+    <tag Name="TextElements" Value="NoCyber" />
+    <xtagUD_CYBP_Legend NoCyber="Incompatible with Cybernetics" />
+    <xtagUD_CYBP_Symbols NoCyber="r::&#x13;" />
+  </object>
+  
+</objects>

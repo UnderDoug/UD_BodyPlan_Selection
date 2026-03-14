@@ -1,4 +1,4 @@
-﻿namespace UD_BodyPlan_Selection.Mod
+﻿namespace UD_ChooseYourBodyPlan.Mod
 {
     public static class Const
     {
@@ -8,7 +8,8 @@
 
         public const string CATEGORY_BLUEPRINT = MOD_PREFIX_SHORT + "BaseCategory";
         public const string CONFIG_BLUEPRINT = MOD_PREFIX_SHORT + "BaseConfiguration";
-        public const string TILES_BLUEPRINT = MOD_PREFIX_SHORT + "BaseAnatomyTile";
+        public const string BODYPLAN_ENTRY_BLUEPRINT = MOD_PREFIX_SHORT + "BaseAnatomyEntry";
+        public const string XFORM_DATA_BLUEPRINT = MOD_PREFIX_SHORT + "BaseTransformationData";
 
         public const string REMOVE_TAG = "*remove";
 

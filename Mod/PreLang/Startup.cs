@@ -3,10 +3,10 @@ using System.Collections.Generic;
 
 using XRL;
 
-using static UD_BodyPlan_Selection.Mod.Utils;
+using static UD_ChooseYourBodyPlan.Mod.Utils;
 using static XRL.XmlDataHelper;
 
-namespace UD_BodyPlan_Selection.Mod
+namespace UD_ChooseYourBodyPlan.Mod
 {
     public static partial class Startup
     {

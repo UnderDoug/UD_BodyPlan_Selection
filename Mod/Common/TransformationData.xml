@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<objects>
+  
+  <object Name="UD_CYBP_BaseTransformationData" Inherits="DataBucket">
+    <tag Name="Anatomy" Value="UNDEFINED" />
+    <tag Name="Recipe" Value="UNDEFINED" />
+    <tag Name="OptionID" Value="UD_ChooseYourBodyPlan_EnableBodyPlansAvailableViaRecipe" />
+    <tag Name="BaseObject" Value="*noinherit" />
+  </object>
+
+  <object Name="UD_CYBP xForm CloacaSurprise" Inherits="UD_CYBP_BaseTransformationData">
+    <tag Name="Anatomy" Value="SlugWithHands" />
+    <tag Name="Recipe" Value="CloacaSurprise" />
+    <part Name="Render" Tile="Creatures/sw_slog.bmp" RenderString="Q" TileColor="&amp;M" DetailColor="G" />
+    <tag Name="Species" Value="slug" />
+    <tag Name="EatenProperty" Value="AteCloacaSurprise" />
+    <mutation Name="SlogGlands" />
+    <!-- tag Name="Mutations" Value="Bilge Sphincter" /-->
+  </object>
+
+  <object Name="UD_CYBP xForm CrystalDelight" Inherits="UD_CYBP_BaseTransformationData">
+    <tag Name="Anatomy" Value="HumanoidOctohedron" />
+    <tag Name="Recipe" Value="CrystalDelight" />
+    <part Name="Render" Tile="Creatures/sw_crystal_body.png" RenderString="µ" TileColor="&amp;Y" DetailColor="m" />
+    <tag Name="Species" Value="crystal" />
+    <tag Name="EatenProperty" Value="AteCrystalDelight" />
+    <mutation Name="Crystallinity" />
+    <!-- tag Name="Mutations" Value="Crystallinity" /-->
+  </object>
+  
+</objects>

@@ -1,8 +1,8 @@
 ﻿using System;
 
-using static UD_BodyPlan_Selection.Mod.AnatomyConfiguration;
+using static UD_ChooseYourBodyPlan.Mod.AnatomyConfiguration;
 
-namespace UD_BodyPlan_Selection.Mod.CharacterBuilds
+namespace UD_ChooseYourBodyPlan.Mod.CharacterBuilds
 {
     [Serializable]
     public class QudBodyPlanModuleDataRow
@@ -21,7 +21,7 @@ namespace UD_BodyPlan_Selection.Mod.CharacterBuilds
             this.Anatomy = Anatomy;
             this.Transformation = Transformation;
         }
-        public QudBodyPlanModuleDataRow(AnatomyChoice Choice)
+        public QudBodyPlanModuleDataRow(BodyPlanEntry Choice)
             : this(Choice?.Anatomy?.Name, Choice?.AnatomyConfigurations?.FirstTransformationOrDefault())
         { }
     }
