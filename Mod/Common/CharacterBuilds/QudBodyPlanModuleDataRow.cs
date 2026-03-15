@@ -8,21 +8,24 @@ namespace UD_ChooseYourBodyPlan.Mod.CharacterBuilds
     public class QudBodyPlanModuleDataRow
     {
         public string Anatomy;
-        public TransformationData Transformation;
+
+        public BodyPlanEntry Entry => BodyPlanFactory.Factory?.BodyPlanEntryByAnatomyName?.GetValue(Anatomy);
+
+        public AnatomyCategoryEntry Category => Entry?.Category;
+
+        public TransformationData Transformation => Entry?.Transformation;
 
         public QudBodyPlanModuleDataRow()
         {
             Anatomy = null;
-            Transformation = null;
         }
-        public QudBodyPlanModuleDataRow(string Anatomy, TransformationData Transformation)
+        public QudBodyPlanModuleDataRow(string Anatomy)
             : this()
         {
             this.Anatomy = Anatomy;
-            this.Transformation = Transformation;
         }
-        public QudBodyPlanModuleDataRow(BodyPlanEntry Choice)
-            : this(Choice?.Anatomy?.Name, Choice?.AnatomyConfigurations?.FirstTransformationOrDefault())
+        public QudBodyPlanModuleDataRow(BodyPlanEntry Entry)
+            : this(Entry?.Anatomy?.Name)
         { }
     }
 }

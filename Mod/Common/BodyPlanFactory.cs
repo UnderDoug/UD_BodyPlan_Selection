@@ -4,6 +4,7 @@ using System.Text;
 
 using XRL;
 using XRL.UI;
+using XRL.UI.Framework;
 using XRL.World;
 using XRL.World.Anatomy;
 
@@ -36,7 +37,7 @@ namespace UD_ChooseYourBodyPlan.Mod
 
         public Dictionary<string, BodyPlanEntry> BodyPlanEntryByAnatomyName;
 
-        public Dictionary<string, AnatomyCategory> AnatomyCategoryByCategoryName;
+        public Dictionary<string, AnatomyCategoryEntry> AnatomyCategoryByCategoryName;
 
         public bool TextElementsInitialized;
 
@@ -113,6 +114,22 @@ namespace UD_ChooseYourBodyPlan.Mod
 
         public TransformationData GetTransformationData(BodyPlanEntry BodyPlanEntry)
             => GetTransformationData(BodyPlanEntry?.Anatomy)
+            ;
+
+        public BodyPlanEntry GetBodyPlanEntry(string Anatomy)
+            => !Anatomy.IsNullOrEmpty()
+            ? BodyPlanEntryByAnatomyName.GetValueOrDefault(Anatomy)
+            : null
+            ;
+
+        public BodyPlanEntry GetBodyPlanEntry(PrefixMenuOption MenuOption)
+            => GetBodyPlanEntry(MenuOption?.Id)
+            ;
+
+        public TextElements GetTextElements(string Name)
+            => !Name.IsNullOrEmpty()
+            ? TextElementsByName.GetValueOrDefault(Name)
+            : null
             ;
     }
 }

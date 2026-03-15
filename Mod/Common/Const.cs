@@ -7,9 +7,9 @@
         public const string MOD_PREFIX_SHORT = "UD_CYBP_";
 
         public const string TEXT_ELEMENTS_BLUEPRINT = MOD_PREFIX_SHORT + "BaseTextElements";
-        public const string CATEGORY_BLUEPRINT = MOD_PREFIX_SHORT + "BaseCategory";
+        public const string CATEGORY_BLUEPRINT = MOD_PREFIX_SHORT + "BaseAnatomyCategoryEntry";
         public const string CONFIG_BLUEPRINT = MOD_PREFIX_SHORT + "BaseConfiguration";
-        public const string BODYPLAN_ENTRY_BLUEPRINT = MOD_PREFIX_SHORT + "BaseAnatomyEntry";
+        public const string BODYPLAN_ENTRY_BLUEPRINT = MOD_PREFIX_SHORT + "BaseBodyPlanEntry";
         public const string XFORM_DATA_BLUEPRINT = MOD_PREFIX_SHORT + "BaseTransformationData";
 
         public const string REMOVE_TAG = "*remove";

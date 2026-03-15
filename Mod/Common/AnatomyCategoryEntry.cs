@@ -10,7 +10,7 @@ using XRL.World.Anatomy;
 namespace UD_ChooseYourBodyPlan.Mod
 {
     [HasModSensitiveStaticCache]
-    public class AnatomyCategory : ILoadFromDataBucket<AnatomyCategory>, IDisposable
+    public class AnatomyCategoryEntry : ILoadFromDataBucket<AnatomyCategoryEntry>, IDisposable
     {
         public struct TextShader
         {
@@ -121,7 +121,7 @@ namespace UD_ChooseYourBodyPlan.Mod
                 ;
         }
 
-        public class CategoryComparer : IComparer<AnatomyCategory>, IDisposable
+        public class CategoryComparer : IComparer<AnatomyCategoryEntry>, IDisposable
         {
             public bool DefaultFirst;
 
@@ -135,7 +135,7 @@ namespace UD_ChooseYourBodyPlan.Mod
                 this.DefaultFirst = DefaultFirst;
             }
 
-            public int Compare(AnatomyCategory x, AnatomyCategory y)
+            public int Compare(AnatomyCategoryEntry x, AnatomyCategoryEntry y)
             {
                 if (y == null)
                 {
@@ -170,8 +170,8 @@ namespace UD_ChooseYourBodyPlan.Mod
         public static int HighestCategory => 23;
 
         [ModSensitiveStaticCache]
-        private static Dictionary<int, AnatomyCategory> _CategoryByID;
-        public static Dictionary<int, AnatomyCategory> CategoryByID
+        private static Dictionary<int, AnatomyCategoryEntry> _CategoryByID;
+        public static Dictionary<int, AnatomyCategoryEntry> CategoryByID
         {
             get
             {
@@ -199,14 +199,14 @@ namespace UD_ChooseYourBodyPlan.Mod
                         }
                         catch (Exception x)
                         {
-                            MetricsManager.LogModWarning(Utils.ThisMod, $"Attempted to make {nameof(AnatomyCategory)} from invalid {nameof(BodyPartCategory)} value: {i}; {x}");
+                            MetricsManager.LogModWarning(Utils.ThisMod, $"Attempted to make {nameof(AnatomyCategoryEntry)} from invalid {nameof(BodyPartCategory)} value: {i}; {x}");
                         }
                     }
                     Utils.Log($"By Blueprints: {Const.CATEGORY_BLUEPRINT}", Indent: 1);
                     foreach (var dataBucket in GameObjectFactory.Factory?.GetBlueprintsInheritingFrom(Const.CATEGORY_BLUEPRINT))
                     {
-                        var category = new AnatomyCategory(dataBucket);
-                        if (_CategoryByID.Values.FirstOrDefault(c => c.CategoryName == category.CategoryName) is AnatomyCategory existingCategory)
+                        var category = new AnatomyCategoryEntry(dataBucket);
+                        if (_CategoryByID.Values.FirstOrDefault(c => c.CategoryName == category.CategoryName) is AnatomyCategoryEntry existingCategory)
                         {
                             existingCategory.Merge(category);
                             Utils.Log($"{dataBucket.Name}, {category.CategoryName}: Merged", Indent: 2);
@@ -233,22 +233,22 @@ namespace UD_ChooseYourBodyPlan.Mod
         }
 
         [ModSensitiveStaticCache]
-        private static Dictionary<string, AnatomyCategory> _CategoryByName;
-        public static Dictionary<string, AnatomyCategory> CategoryByName
+        private static Dictionary<string, AnatomyCategoryEntry> _CategoryByName;
+        public static Dictionary<string, AnatomyCategoryEntry> CategoryByName
         {
             get
             {
                 if (_CategoryByName.IsNullOrEmpty())
                 {
                     _CategoryByName = new();
-                    foreach (var category in CategoryByID?.Values ?? Enumerable.Empty<AnatomyCategory>())
+                    foreach (var category in CategoryByID?.Values ?? Enumerable.Empty<AnatomyCategoryEntry>())
                         _CategoryByName[category.CategoryName] = category;
                 }
                 return _CategoryByName;
             }
         }
 
-        public static IEnumerable<AnatomyCategory> Categories => CategoryByID.Values;
+        public static IEnumerable<AnatomyCategoryEntry> Categories => CategoryByID.Values;
 
         public string BaseDataBucketBlueprint => Const.CATEGORY_BLUEPRINT;
 
@@ -277,7 +277,7 @@ namespace UD_ChooseYourBodyPlan.Mod
             return null;
         }
 
-        public static AnatomyCategory GetFor(BodyPlanEntry Choice)
+        public static AnatomyCategoryEntry GetFor(BodyPlanEntry Choice)
         {
             if (Choice == null)
                 throw new ArgumentNullException(nameof(Choice));
@@ -285,7 +285,7 @@ namespace UD_ChooseYourBodyPlan.Mod
             if (CategoryByID.IsNullOrEmpty())
                 throw new InvalidOperationException($"{nameof(CategoryByID)} not initialized.");
 
-            AnatomyCategory category = null;
+            AnatomyCategoryEntry category = null;
             if (Choice.AnatomyConfigurations.GetCategoryName() is string configCategory)
             {
                 CategoryByName.TryGetValue(configCategory, out category);
@@ -319,7 +319,7 @@ namespace UD_ChooseYourBodyPlan.Mod
             return category;
         }
 
-        public static bool TryGetFor(BodyPlanEntry Choice, out AnatomyCategory Category)
+        public static bool TryGetFor(BodyPlanEntry Choice, out AnatomyCategoryEntry Category)
         {
             Category = null;
 
@@ -342,7 +342,7 @@ namespace UD_ChooseYourBodyPlan.Mod
 
         public List<BodyPlanEntry> Entries;
 
-        public AnatomyCategory()
+        public AnatomyCategoryEntry()
         {
             ID = -1;
             CategoryName = null;
@@ -351,13 +351,13 @@ namespace UD_ChooseYourBodyPlan.Mod
             Entries = new();
         }
 
-        public AnatomyCategory(GameObjectBlueprint DataBucket)
+        public AnatomyCategoryEntry(GameObjectBlueprint DataBucket)
             : base()
         {
             LoadFromDataBucket(DataBucket);
         }
 
-        public AnatomyCategory Merge(AnatomyCategory Other)
+        public AnatomyCategoryEntry Merge(AnatomyCategoryEntry Other)
         {
             if (Other != null)
             {
@@ -431,9 +431,9 @@ namespace UD_ChooseYourBodyPlan.Mod
                     Utils.Log($"::{choice.GetDescription()}", Indent: Indent + 1);
         }
 
-        public AnatomyCategory LoadFromDataBucket(GameObjectBlueprint DataBucket)
+        public AnatomyCategoryEntry LoadFromDataBucket(GameObjectBlueprint DataBucket)
         {
-            if (!ILoadFromDataBucket<AnatomyCategory>.CheckIsValidDataBucket(this, DataBucket))
+            if (!ILoadFromDataBucket<AnatomyCategoryEntry>.CheckIsValidDataBucket(this, DataBucket))
                 return null;
 
             if (!DataBucket.TryGetTagValueForData(nameof(CategoryName), out CategoryName))
@@ -468,7 +468,7 @@ namespace UD_ChooseYourBodyPlan.Mod
             return this;
         }
 
-        public AnatomyCategory Clone()
+        public AnatomyCategoryEntry Clone()
             => new()
             {
                 ID = -1,

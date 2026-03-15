@@ -27,6 +27,8 @@ namespace UD_ChooseYourBodyPlan.Mod
     {
         public static ModInfo ThisMod => ModManager.GetMod(Const.MOD_ID);
 
+        public static bool IsTruekinEmbarking = false;
+
         #region Blueprints For Display
 
         [ModSensitiveStaticCache]
@@ -265,6 +267,23 @@ namespace UD_ChooseYourBodyPlan.Mod
         public static ICollection<T> MergeDistinctInCollection<T>(ref ICollection<T> Source, ICollection<T> Other)
         {
             Source ??= new List<T>();
+            if (!Other.IsNullOrEmpty())
+                foreach (var element in Other)
+                    if (!Source.Contains(element))
+                        Source.Add(element);
+
+            return Source;
+        }
+
+        /// <summary>
+        /// "Merge distinct" adds any <paramref name="Other"/> elements that the <paramref name="Source"/> collection doesn't already contain.
+        /// </summary>
+        /// <param name="Source"></param>
+        /// <param name="Other"></param>
+        /// <returns></returns>
+        public static OptionDelegates MergeDistinctInCollection(ref OptionDelegates Source, OptionDelegates Other)
+        {
+            Source ??= new OptionDelegates();
             if (!Other.IsNullOrEmpty())
                 foreach (var element in Other)
                     if (!Source.Contains(element))

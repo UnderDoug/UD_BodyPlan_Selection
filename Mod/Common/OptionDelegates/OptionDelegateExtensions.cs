@@ -10,30 +10,14 @@ namespace UD_ChooseYourBodyPlan.Mod
 {
     public static class OptionDelegateExtensions
     {
-        public static bool CheckAll(this IEnumerable<OptionDelegate> OptionDelegates)
-        {
-            foreach (var option in OptionDelegates)
-                if (!option.Check())
-                    return false;
-            return true;
-        }
-
-        public static bool CheckAny(this IEnumerable<OptionDelegate> OptionDelegates)
-        {
-            foreach (var option in OptionDelegates)
-                if (option.Check())
-                    return true;
-            return false;
-        }
-
-        public static IEnumerable<bool> GetChecks(this IEnumerable<OptionDelegate> OptionDelegates)
+        public static IEnumerable<bool> GetChecks(this OptionDelegates OptionDelegates)
         {
             foreach (var option in OptionDelegates)
                 yield return option.Check();
         }
 
         public static bool Contains(
-            this IEnumerable<OptionDelegate> OptionDelegates,
+            this OptionDelegates OptionDelegates,
             string OptionID
             )
         {
@@ -41,15 +25,14 @@ namespace UD_ChooseYourBodyPlan.Mod
                 return false;
 
             foreach (var optionDelegate in OptionDelegates)
-                if (optionDelegate.OptionID == OptionID
-                    && optionDelegate.IsValid())
+                if (optionDelegate.OptionID == OptionID)
                     return true;
 
             return false;
         }
 
         private static bool CheckProceed(
-            IEnumerable<OptionDelegate> OptionDelegates,
+            OptionDelegates OptionDelegates,
             string OptionID
             )
         {
@@ -62,20 +45,20 @@ namespace UD_ChooseYourBodyPlan.Mod
             return true;
         }
 
-        public static IEnumerable<OptionDelegate> GetWhere(
-            this IEnumerable<OptionDelegate> OptionDelegates,
-            Predicate<OptionDelegate> Where)
+        public static IEnumerable<BaseOptionDelegate> GetWhere(
+            this OptionDelegates OptionDelegates,
+            Predicate<BaseOptionDelegate> Where)
         {
             if (OptionDelegates.IsNullOrEmpty())
                 yield break;
 
             foreach (var optionDelegate in OptionDelegates)
-                if (Where?.Invoke(optionDelegate) is not false)
+                if (Where.Invoke(optionDelegate))
                     yield return optionDelegate;
         }
 
         public static bool ParseOptionTag(
-            this ICollection<OptionDelegate> OptionDelegates,
+            this OptionDelegates OptionDelegates,
             KeyValuePair<string, string> OptionTag
             )
         {
@@ -89,7 +72,7 @@ namespace UD_ChooseYourBodyPlan.Mod
             string operatorString = null;
             string trueWhen = null;
 
-            var validTags = OptionDelegate.ValidTags;
+            var validTags = BaseOptionDelegate.ValidTags;
 
             if (validTags.Any(s => tagName == s))
             {
@@ -131,7 +114,7 @@ namespace UD_ChooseYourBodyPlan.Mod
                         }
                         else
                         if (nameParams[1].EqualsNoCase("require")
-                            && OptionDelegate.TryParseOptionPredicate(tagName, out optionID, out operatorString, out trueWhen)
+                            && BaseOptionDelegate.TryParseOptionPredicate(tagName, out optionID, out operatorString, out trueWhen)
                             && OptionDelegates.Contains(optionID))
                         {
                             optionID = null;
@@ -143,7 +126,7 @@ namespace UD_ChooseYourBodyPlan.Mod
             }
             else
             if (optionID.IsNullOrEmpty())
-                Utils.ThisMod.Error($"{new ArgumentException($"Failed to parse into valid {nameof(OptionDelegate)}", nameof(OptionTag))}");
+                Utils.ThisMod.Error($"{new ArgumentException($"Failed to parse into valid {nameof(BaseOptionDelegate)}", nameof(OptionTag))}");
 
             return !optionID.IsNullOrEmpty()
                 && OptionDelegates.Merge(optionID, operatorString, trueWhen);
@@ -153,7 +136,7 @@ namespace UD_ChooseYourBodyPlan.Mod
             => DataBucket.GetTagsStartingWith("Option");
 
         public static bool ParseDataBucket(
-            this ICollection<OptionDelegate> OptionDelegates,
+            this OptionDelegates OptionDelegates,
             GameObjectBlueprint DataBucket
             )
         {
@@ -168,22 +151,30 @@ namespace UD_ChooseYourBodyPlan.Mod
             return any;
         }
 
-        public static OptionDelegate GetOptionDelegate(
-            this ICollection<OptionDelegate> OptionDelegates,
-            Predicate<OptionDelegate> Where
+        public static IEnumerable<BaseOptionDelegate> GetOptionDelegates(this OptionDelegates OptionDelegates)
+        {
+            if (OptionDelegates.IsNullOrEmpty())
+                yield break;
+
+            foreach (var optionDelegate in OptionDelegates)
+                yield return optionDelegate;
+        }
+
+        public static BaseOptionDelegate GetOptionDelegate(
+            this OptionDelegates OptionDelegates,
+            Predicate<BaseOptionDelegate> Where
             )
         {
             if (OptionDelegates.IsNullOrEmpty())
                 return null;
 
-            if (Where == null)
-                OptionDelegates.First();
-
-            return OptionDelegates.FirstOrDefault(Where.Invoke);
+            return OptionDelegates
+                .GetOptionDelegates()
+                .FirstOrDefault(o => Where?.Invoke(o) is not false);
         }
 
-        public static OptionDelegate GetOptionDelegate(
-            this ICollection<OptionDelegate> OptionDelegates,
+        public static BaseOptionDelegate GetOptionDelegate(
+            this OptionDelegates OptionDelegates,
             string OptionID
             )
             => CheckProceed(OptionDelegates, OptionID)
@@ -192,17 +183,17 @@ namespace UD_ChooseYourBodyPlan.Mod
             ;
 
         public static bool TryGetOption(
-            this ICollection<OptionDelegate> OptionDelegates,
+            this OptionDelegates OptionDelegates,
             string OptionID,
-            out OptionDelegate OptionDelegate
+            out BaseOptionDelegate OptionDelegate
             )
             => (OptionDelegate = OptionDelegates.GetOptionDelegate(OptionID)) != null;
 
         public static bool Merge(
-            this ICollection<OptionDelegate> OptionDelegates,
+            this OptionDelegates OptionDelegates,
             string OptionID,
             string Operator,
-            string TrueWhen
+            string TrueState
             )
         {
             if (CheckProceed(OptionDelegates, OptionID))
@@ -210,8 +201,8 @@ namespace UD_ChooseYourBodyPlan.Mod
 
             if (!OptionDelegates.TryGetOption(OptionID, out var existingOption))
             {
-                if (!TrueWhen.IsNullOrEmpty()
-                    && new OptionDelegate(OptionID, Operator, TrueWhen) is OptionDelegate newOption
+                if (!TrueState.IsNullOrEmpty()
+                    && new OptionDelegate(OptionID, Operator, TrueState) is OptionDelegate newOption
                     && newOption.IsValid())
                 {
                     OptionDelegates.Add(newOption);
@@ -220,12 +211,12 @@ namespace UD_ChooseYourBodyPlan.Mod
                 return false;
             }
 
-            if ((TrueWhen.IsNullOrEmpty()
-                    || TrueWhen.EqualsNoCase(Const.REMOVE_TAG))
+            if ((TrueState.IsNullOrEmpty()
+                    || TrueState.EqualsNoCase(Const.REMOVE_TAG))
                 && OptionDelegates.RemoveOptionID(OptionID))
                 return true;
 
-            if (!existingOption.ModifyTruth(Operator, TrueWhen).IsValid())
+            if (!existingOption.ModifyTruth(Operator, TrueState).IsValid())
             {
                 OptionDelegates.Remove(existingOption);
                 return false;
@@ -235,16 +226,17 @@ namespace UD_ChooseYourBodyPlan.Mod
         }
 
         public static bool Merge(
-            this ICollection<OptionDelegate> OptionDelegates,
-            OptionDelegate Source
+            this OptionDelegates OptionDelegates,
+            BaseOptionDelegate Source
             )
             => OptionDelegates.Merge(
                 OptionID: Source.OptionID,
                 Operator: Source.Operator,
-                TrueWhen: Source.TrueWhen);
+                TrueState: Source.TrueState)
+            ;
 
         public static bool RemoveOptionID(
-            this ICollection<OptionDelegate> OptionDelegates,
+            this OptionDelegates OptionDelegates,
             string OptionID
             )
         {
@@ -252,12 +244,12 @@ namespace UD_ChooseYourBodyPlan.Mod
                 return false;
 
             bool any = false;
-            using var iterator = ScopeDisposedList<OptionDelegate>.GetFromPoolFilledWith(OptionDelegates);
-            foreach (var option in iterator)
+            using var iterator = ScopeDisposedList<BaseOptionDelegate>.GetFromPoolFilledWith(OptionDelegates);
+            foreach (var optionDelegate in iterator)
             {
-                if (option.OptionID == OptionID)
+                if (optionDelegate.OptionID == OptionID)
                 {
-                    OptionDelegates.Remove(option);
+                    OptionDelegates.Remove(optionDelegate);
                     any = true;
                 }
             }

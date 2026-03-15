@@ -53,6 +53,8 @@ namespace UD_ChooseYourBodyPlan.Mod
         public string SummaryBefore;
         public string SummaryAfter;
 
+        public StringMap<string> LegendByName;
+
         public StringMap<Symbol> SymbolsByName;
 
         private List<Symbol> _Symbols;
@@ -95,6 +97,13 @@ namespace UD_ChooseYourBodyPlan.Mod
                 SymbolsByName = new();
                 foreach (var xTagEntry in symbolsXTag)
                     SymbolsByName[xTagEntry.Key] = new(xTagEntry);
+            }
+
+            if (DataBucket.TryGetXtag(nameof(LegendByName), out Dictionary<string, string> legendXTag))
+            {
+                LegendByName = new();
+                foreach (var xTagEntry in legendXTag)
+                    LegendByName[xTagEntry.Key] = xTagEntry.Value;
             }
             return this;
         }

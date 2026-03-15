@@ -266,6 +266,8 @@ namespace UD_ChooseYourBodyPlan.Mod.CharacterBuilds
             if (module == this)
                 return;
 
+            Utils.IsTruekinEmbarking = GenotypeModuleData?.Entry?.IsTrueKin ?? false;
+
             OrganizeAnatomyChoices();
         }
 

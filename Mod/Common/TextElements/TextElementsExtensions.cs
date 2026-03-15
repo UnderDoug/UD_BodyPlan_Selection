@@ -18,38 +18,57 @@ namespace UD_ChooseYourBodyPlan.Mod
                 yield return new(tagName[startsWithIndex..], tagValue);
         }
 
-        public static IEnumerable<TextElements> GetTextElements(this IEnumerable<TextElements> TextElements, Predicate<TextElements> Where)
+        public static IEnumerable<TextElements> GetTextElements(
+            this IEnumerable<TextElements> TextElements,
+            Predicate<TextElements> Where = null
+            )
         {
             foreach (var textElements in TextElements)
                 if (Where?.Invoke(textElements) is not false)
                     yield return textElements;
         }
 
-        public static IEnumerable<string> GetDescriptionBefores(this IEnumerable<TextElements> TextElements, Predicate<TextElements> Where)
+        public static IEnumerable<string> GetDescriptionBefores(
+            this IEnumerable<TextElements> TextElements,
+            Predicate<TextElements> Where = null
+            )
         {
             foreach (var textElements in TextElements.GetTextElements(Where))
                 yield return textElements.DescriptionBefore;
         }
 
-        public static IEnumerable<string> GetDescriptionAfters(this IEnumerable<TextElements> TextElements, Predicate<TextElements> Where)
+        public static IEnumerable<string> GetDescriptionAfters(
+            this IEnumerable<TextElements> TextElements,
+            Predicate<TextElements> Where = null
+            )
         {
             foreach (var textElements in TextElements.GetTextElements(Where))
                 yield return textElements.DescriptionAfter;
         }
 
-        public static IEnumerable<string> GetSummaryBefores(this IEnumerable<TextElements> TextElements, Predicate<TextElements> Where)
+        public static IEnumerable<string> GetSummaryBefores(
+            this IEnumerable<TextElements> TextElements,
+            Predicate<TextElements> Where = null
+            )
         {
             foreach (var textElements in TextElements.GetTextElements(Where))
                 yield return textElements.SummaryBefore;
         }
 
-        public static IEnumerable<string> GetSummaryAfters(this IEnumerable<TextElements> TextElements, Predicate<TextElements> Where)
+        public static IEnumerable<string> GetSummaryAfters(
+            this IEnumerable<TextElements> TextElements,
+            Predicate<TextElements> Where = null
+            )
         {
             foreach (var textElements in TextElements.GetTextElements(Where))
                 yield return textElements.SummaryAfter;
         }
 
-        public static IEnumerable<string> GetSymbols(this IEnumerable<TextElements> TextElements, Predicate<TextElements> Where, Predicate<TextElements.Symbol> Filter)
+        public static IEnumerable<string> GetSymbols(
+            this IEnumerable<TextElements> TextElements,
+            Predicate<TextElements> Where = null,
+            Predicate<TextElements.Symbol> Filter = null
+            )
         {
             foreach (var textElements in TextElements.GetTextElements(Where))
             {

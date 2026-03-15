@@ -9,40 +9,50 @@ using XRL.World;
 namespace UD_ChooseYourBodyPlan.Mod
 {
     [Serializable]
-    public class OptionDelegates : List<OptionDelegate>
+    public class OptionDelegates : List<BaseOptionDelegate>
     {
         public OptionDelegates()
         {
         }
 
-        public OptionDelegates(IReadOnlyList<OptionDelegate> Source)
+        public OptionDelegates(IReadOnlyList<BaseOptionDelegate> Source)
             : this()
         {
             if (!Source.IsNullOrEmpty())
                 foreach (var optionDelegate in Source)
-                    this.Merge(optionDelegate.Clone());
+                    Merge(optionDelegate);
         }
 
         public OptionDelegates(OptionDelegates Source)
-            : this((IReadOnlyList<OptionDelegate>)Source)
+            : base(Source)
         {
         }
-
-        public virtual bool Check()
-            => this.CheckAll()
-            ;
 
         public OptionDelegates Merge(OptionDelegates Other)
         {
             if (!Other.IsNullOrEmpty())
             {
-                foreach (var optionDelegate in Other)
-                    this.Merge(optionDelegate);
+                foreach (var spec in Other)
+                {
+                    if (spec is BaseOptionDelegate optionDelegateSpec)
+                        Merge(optionDelegateSpec);
+                    else
+                        if (!Contains(spec))
+                        Add(spec);
+                }
             }
             return this;
         }
 
-        public OptionDelegates Clone()
-            => new(this);
+        public void Merge(BaseOptionDelegate OptionDelegate)
+        {
+            foreach (var spec in this)
+            {
+                if (spec is BaseOptionDelegate optionDelegateSpec)
+                {
+                    optionDelegateSpec.Merge(OptionDelegate);
+                }
+            }
+        }
     }
 }

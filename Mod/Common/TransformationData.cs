@@ -10,6 +10,7 @@ using static UD_ChooseYourBodyPlan.Mod.AnatomyConfiguration;
 
 namespace UD_ChooseYourBodyPlan.Mod
 {
+    [Serializable]
     public class TransformationData : ILoadFromDataBucket<TransformationData>
     {
         public string BaseDataBucketBlueprint => Const.XFORM_DATA_BLUEPRINT;
@@ -121,6 +122,11 @@ namespace UD_ChooseYourBodyPlan.Mod
             Render = null;
             OptionDelegates.Clear();
             OptionDelegates = null;
+        }
+
+        public TransformationData Merge(TransformationData Other)
+        {
+            throw new NotImplementedException();
         }
     }
 }

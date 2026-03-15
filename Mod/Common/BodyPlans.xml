@@ -3,12 +3,19 @@
   
   <object Name="UD_CYBP_BaseBodyPlanEntry" Inherits="DataBucket">
     <tag Name="Anatomy" Value="UNDEFINED" />
+    <tag Name="RandomWeight" Value="5" />
     <tag Name="BaseObject" Value="*noinherit" />
   </object>
   
   <object Name="UD_CYBP_BaseRestrictedBodyPlan" Inherits="UD_CYBP_BaseBodyPlanEntry">
     <tag Name="BaseObject" Value="*noinherit" />
     <tag Name="Restricted" />
+  </object>
+  
+  <object Name="UD_CYBP_BaseDifficultBodyPlan" Inherits="UD_CYBP_BaseBodyPlanEntry">
+    <tag Name="TextElements.Difficult" />
+    <tag Name="RandomWeight" Value="1" />
+    <tag Name="BaseObject" Value="*noinherit" />
   </object>
 
   <object Name="UD_CYBP_BodyPlanEntry AirWell" Inherits="UD_CYBP_BaseBodyPlanEntry">
@@ -41,11 +48,10 @@
     <part Name="Render" Tile="Creatures/sw_templar_mech_big.bmp" RenderString="@" ColorString="&amp;c" TileColor="&amp;c" DetailColor="r" />
   </object>
 
-  <object Name="UD_CYBP_BodyPlanEntry BipedalRobot" Inherits="UD_CYBP_BaseBodyPlanEntry">
+  <object Name="UD_CYBP_BodyPlanEntry BipedalRobot" Inherits="UD_CYBP_BaseDifficultBodyPlan">
     <tag Name="Anatomy" Value="BipedalRobot" />
     <tag Name="BasedOnBlueprint" Value="Urn Porter" />
     <part Name="Render" Tile="creatures/sw_urnduster.bmp" RenderString="0" ColorString="&amp;y" DetailColor="Y" />
-    <tag Name="TextElements.Difficult" />
   </object>
 
   <object Name="UD_CYBP_BodyPlanEntry BipedalRobotWithArmatures" Inherits="UD_CYBP_BaseBodyPlanEntry">
@@ -92,11 +98,10 @@
     <part Name="Render" Tile="Items/sw_monster_whiteboard.bmp" RenderString="223" ColorString="&amp;K" TileColor="&amp;y" DetailColor="w" />
   </object>
 
-  <object Name="UD_CYBP_BodyPlanEntry Clam" Inherits="UD_CYBP_BaseBodyPlanEntry">
+  <object Name="UD_CYBP_BodyPlanEntry Clam" Inherits="UD_CYBP_BaseDifficultBodyPlan">
     <tag Name="Anatomy" Value="Clam" />
     <tag Name="BasedOnBlueprint" Value="Giant Clam" />
     <part Name="Render" Tile="Creatures/sw_clam_1.bmp" RenderString="128" ColorString="&amp;Y" DetailColor="y" />
-    <tag Name="TextElements.Difficult" />
   </object>
 
   <object Name="UD_CYBP_BodyPlanEntry ClothWall" Inherits="UD_CYBP_BaseBodyPlanEntry">
@@ -117,11 +122,10 @@
     <part Name="Render" Tile="Assets_Content_Textures_Tiles_sw_doorclosed.bmp" RenderString="+" ColorString="&amp;y" DetailColor="y" />
   </object>
 
-  <object Name="UD_CYBP_BodyPlanEntry Echinoid" Inherits="UD_CYBP_BaseBodyPlanEntry">
+  <object Name="UD_CYBP_BodyPlanEntry Echinoid" Inherits="UD_CYBP_BaseDifficultBodyPlan">
     <tag Name="Anatomy" Value="Echinoid" />
     <tag Name="BasedOnBlueprint" Value="Junk Dollar" />
     <part Name="Render" Tile="Creatures/sw_urchin.bmp" RenderString="11" ColorString="&amp;W" DetailColor="c" />
-    <tag Name="TextElements.Difficult" />
   </object>
 
   <object Name="UD_CYBP_BodyPlanEntry Fish" Inherits="UD_CYBP_BaseBodyPlanEntry">
@@ -260,25 +264,22 @@
           TileColor="&amp;c" DetailColor="C" />
   </object>
 
-  <object Name="UD_CYBP_BodyPlanEntry Mirror" Inherits="UD_CYBP_BaseBodyPlanEntry">
+  <object Name="UD_CYBP_BodyPlanEntry Mirror" Inherits="UD_CYBP_BaseDifficultBodyPlan">
     <tag Name="Anatomy" Value="Mirror" />
     <tag Name="BasedOnBlueprint" Value="Quartziferous Mirror" />
     <part Name="Render" Tile="Creatures/sw_mirror.bmp" RenderString="15" ColorString="&amp;K" DetailColor="Y" />
-    <tag Name="TextElements.Difficult" />
   </object>
 
-  <object Name="UD_CYBP_BodyPlanEntry Motes" Inherits="UD_CYBP_BaseBodyPlanEntry">
+  <object Name="UD_CYBP_BodyPlanEntry Motes" Inherits="UD_CYBP_BaseDifficultBodyPlan">
     <tag Name="Anatomy" Value="Motes" />
     <tag Name="BasedOnBlueprint" Value="Mote Cloud" />
     <part Name="Render" Tile="Creatures/sw_mote_cloud.bmp" RenderString="176" ColorString="&amp;B" DetailColor="M" />
-    <tag Name="TextElements.Difficult" />
   </object>
 
-  <object Name="UD_CYBP_BodyPlanEntry Nest" Inherits="UD_CYBP_BaseBodyPlanEntry">
+  <object Name="UD_CYBP_BodyPlanEntry Nest" Inherits="UD_CYBP_BaseDifficultBodyPlan">
     <tag Name="Anatomy" Value="Nest" />
     <tag Name="BasedOnBlueprint" Value="Giant Centipede Nest" />
     <part Name="Render" Tile="Creatures/sw_nest.bmp" RenderString="15" ColorString="&amp;w" DetailColor="r" />
-    <tag Name="TextElements.Difficult" />
   </object>
 
   <object Name="UD_CYBP_BodyPlanEntry Octohedron" Inherits="UD_CYBP_BaseBodyPlanEntry">
@@ -355,11 +356,10 @@
     <part Name="Render" Tile="Items/sw_chair_rocking.bmp" RenderString="190" ColorString="&amp;w" DetailColor="y" />
   </object>
 
-  <object Name="UD_CYBP_BodyPlanEntry Slug" Inherits="UD_CYBP_BaseBodyPlanEntry">
+  <object Name="UD_CYBP_BodyPlanEntry Slug" Inherits="UD_CYBP_BaseDifficultBodyPlan">
     <tag Name="Anatomy" Value="Slug" />
     <tag Name="BasedOnBlueprint" Value="Ickslug" />
     <part Name="Render" Tile="creatures/sw_slug.bmp" RenderString="q" ColorString="&amp;m" DetailColor="B" />
-    <tag Name="TextElements.Difficult" />
   </object>
 
   <object Name="UD_CYBP_BodyPlanEntry SlugWithHands" Inherits="UD_CYBP_BaseBodyPlanEntry">
@@ -374,18 +374,16 @@
     <part Name="Render" Tile="Creatures/sw_three_headed_fungi.bmp" RenderString="@" ColorString="&amp;w" DetailColor="W" />
   </object>
 
-  <object Name="UD_CYBP_BodyPlanEntry Snail" Inherits="UD_CYBP_BaseBodyPlanEntry">
+  <object Name="UD_CYBP_BodyPlanEntry Snail" Inherits="UD_CYBP_BaseDifficultBodyPlan">
     <tag Name="Anatomy" Value="Snail" />
     <tag Name="BasedOnBlueprint" Value="Electric Snail" />
     <part Name="Render" Tile="creatures/sw_snail.bmp" RenderString="q" ColorString="&amp;W" DetailColor="B" />
-    <tag Name="TextElements.Difficult" />
   </object>
 
-  <object Name="UD_CYBP_BodyPlanEntry Snake" Inherits="UD_CYBP_BaseBodyPlanEntry">
+  <object Name="UD_CYBP_BodyPlanEntry Snake" Inherits="UD_CYBP_BaseDifficultBodyPlan">
     <tag Name="Anatomy" Value="Snake" />
     <tag Name="BasedOnBlueprint" Value="Dawnglider" />
     <part Name="Render" Tile="creatures/sw_dawnglider.bmp" RenderString="r" ColorString="&amp;G" DetailColor="W" />
-    <tag Name="TextElements.Difficult" />
   </object>
 
   <object Name="UD_CYBP_BodyPlanEntry Spider" Inherits="UD_CYBP_BaseBodyPlanEntry">
@@ -442,11 +440,10 @@
     <part Name="Render" Tile="Creatures/sw_orb_legged.bmp" RenderString="7" ColorString="&amp;c" DetailColor="Y" />
   </object>
 
-  <object Name="UD_CYBP_BodyPlanEntry Turret" Inherits="UD_CYBP_BaseBodyPlanEntry">
+  <object Name="UD_CYBP_BodyPlanEntry Turret" Inherits="UD_CYBP_BaseDifficultBodyPlan">
     <tag Name="Anatomy" Value="Turret" />
     <tag Name="BasedOnBlueprint" Value="Vivira" />
     <part Name="Render" Tile="Creatures/sw_chainlaser_emplacement.bmp" RenderString="5" ColorString="&amp;M" DetailColor="C" />
-    <tag Name="TextElements.Difficult" />
   </object>
 
   <object Name="UD_CYBP_BodyPlanEntry VanedMechanism" Inherits="UD_CYBP_BaseBodyPlanEntry">
@@ -501,10 +498,9 @@
           TileColor="&amp;w" DetailColor="y" />
   </object>
 
-  <object Name="UD_CYBP_BodyPlanEntry Worm" Inherits="UD_CYBP_BaseBodyPlanEntry">
+  <object Name="UD_CYBP_BodyPlanEntry Worm" Inherits="UD_CYBP_BaseDifficultBodyPlan">
     <tag Name="Anatomy" Value="WormWorm" />
     <tag Name="BasedOnBlueprint" Value="Saltwurm" />
     <part Name="Render" Tile="Creatures/sw_kraken.bmp" RenderString="W" ColorString="&amp;Y" DetailColor="y" />
-    <tag Name="TextElements.Difficult" />
   </object>
 </objects>

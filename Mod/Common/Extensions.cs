@@ -9,11 +9,13 @@ using XRL;
 using XRL.World;
 using XRL.World.Anatomy;
 using XRL.World.Parts;
+using XRL.Collections;
+using XRL.UI.Framework;
+
+using Event = XRL.World.Event;
 
 using static UD_ChooseYourBodyPlan.Mod.Utils;
 using static UD_ChooseYourBodyPlan.Mod.Const;
-using System.Collections.Concurrent;
-using XRL.Collections;
 
 namespace UD_ChooseYourBodyPlan.Mod
 {
@@ -117,12 +119,6 @@ namespace UD_ChooseYourBodyPlan.Mod
         {
             Bag.Add(Ball, Weight);
             return Bag;
-        }
-
-        public static IProducerConsumerCollection<T> AddA<T>(this IProducerConsumerCollection<T> Collection, T Item)
-        {
-            Collection.TryAdd(Item);
-            return Collection;
         }
 
         public static ICollection<T> AddA<T>(this ICollection<T> Collection, T Item)
@@ -428,6 +424,176 @@ namespace UD_ChooseYourBodyPlan.Mod
                         func: AggregateNewline);
         }
 
+
+
+        public static BodyPlan.LimbTreeBranch InitializeLimbTreeBranch(
+            this BodyPart BodyPart,
+            out bool HasNaturalEquipment
+            )
+        {
+            string defaultBehaviour = BodyPart.VariantTypeModel().DefaultBehavior;
+            HasNaturalEquipment = !defaultBehaviour.IsNullOrEmpty();
+
+            string cardinalDescription = BodyPart.GetCardinalDescription();
+
+            string finalType = null;
+            if (BodyPart.IsVariantType()
+                && !cardinalDescription.ContainsNoCase(BodyPart.Type))
+                finalType = BodyPart.TypeModel().FinalType;
+
+            string extra = null;
+            if (BodyPart.VariantTypeModel().FinalType.EqualsNoCase("body")
+                && BodyPart.ParentBody.CalculateMobilitySpeedPenalty() is int moveSpeedPenalty
+                && moveSpeedPenalty > 0)
+                extra = $" {"{{r|"}{-moveSpeedPenalty} Move Speed Penalty{"}}"}";
+
+            return new()
+            {
+                CardinalDescription = cardinalDescription,
+                Description = BodyPart.VariantTypeModel().Description,
+                FinalType = finalType,
+                NaturalEquipment = BodyPlan.GetDefaultBehaviorString(defaultBehaviour),
+                Extra = extra,
+            };
+        }
+
+        public static BodyPlan.LimbTreeBranch InitializeLimbTreeBranch(this BodyPart BodyPart)
+            => InitializeLimbTreeBranch(BodyPart, out _)
+            ;
+
+        public static IEnumerable<BodyPlan.LimbTreeBranch> GetLimbTreeBranches(
+            this BodyPart BodyPart,
+            Func<
+                BodyPart,
+                Func<string, string>,
+                Func<BodyPart, BodyPlan.LimbTreeBranch>,
+                Dictionary<int, char>, int, int, int, BodyPlan.LimbTreeBranch
+                > Selector,
+            Func<string, string> IndentProc,
+            Func<BodyPart, BodyPlan.LimbTreeBranch> BodyPartProc,
+            Dictionary<int, char> IndentDrawing,
+            int DepthLimit = int.MaxValue,
+            int Depth = 0,
+            int SiblingOrdinal = 1,
+            int SiblingCardinal = 1,
+            Predicate<BodyPart> Filter = null
+            )
+        {
+            IndentDrawing ??= new();
+            if (BodyPart == null)
+                yield break;
+
+            yield return Selector(BodyPart, IndentProc, BodyPartProc, IndentDrawing, Depth, SiblingOrdinal, SiblingCardinal);
+            if (Depth >= DepthLimit)
+                yield break;
+
+            Filter ??= (bp => true);
+            if (BodyPart.LoopSubparts().Where(Filter.Invoke) is IEnumerable<BodyPart> subparts)
+            {
+                int children = subparts.Count();
+                int child = 0;
+                if (subparts.SelectMany(
+                    selector: bp => bp.GetLimbTreeBranches(
+                        Selector: Selector,
+                        IndentProc: IndentProc,
+                        BodyPartProc: BodyPartProc,
+                        IndentDrawing: IndentDrawing,
+                        DepthLimit: DepthLimit,
+                        Depth: Depth + 1,
+                        SiblingOrdinal: ++child,
+                        SiblingCardinal: children,
+                        Filter: Filter)) is IEnumerable<BodyPlan.LimbTreeBranch> subResults)
+                    foreach (BodyPlan.LimbTreeBranch subResult in subResults)
+                        yield return subResult;
+            }
+        }
+        public static BodyPlan.LimbTreeBranch GetLimbTreeBranch(
+            this BodyPart BodyPart,
+            Func<string, string> IndentProc,
+            Func<BodyPart, BodyPlan.LimbTreeBranch> BodyPartProc,
+            Dictionary<int, char> IndentDrawing,
+            int Depth,
+            int Ordinal,
+            int Cardinal
+            )
+        {
+            var indent = Event.NewStringBuilder();
+
+            IndentDrawing[Depth] = Ordinal == Cardinal ? NBSP : VERT;
+
+            for (int i = 0; i < Depth; ++i)
+            {
+                indent
+                    .Append(IndentDrawing.GetValueOrDefault(i, NBSP))
+                    .Append(NBSP)
+                    ;
+
+                if (i == 0)
+                    indent.Append(NBSP);
+            }
+
+            if (Depth == 0)
+                indent
+                    .Append(NBSP)
+                    .Append(RTRNG)
+                    .Append(NBSP)
+                    ;
+            else
+            if (Depth != 0)
+                indent
+                    .Append(Ordinal == Cardinal ? UANR : VERR)
+                    .Append(HRZT)
+                    ;
+
+            var limbTreeBranch = BodyPartProc(BodyPart);
+            limbTreeBranch.Indent = IndentProc(Event.FinalizeString(indent));
+            return limbTreeBranch;
+        }
+
+        public static IEnumerable<BodyPlan.LimbTreeBranch> GetLimbTree(
+            this Body Body,
+            Func<string, string> IndentProc,
+            Func<BodyPart, BodyPlan.LimbTreeBranch> BodyPartProc,
+            int DepthLimit = int.MaxValue,
+            bool Treat0DepthPartsAsRoot = true
+            )
+        {
+            if (Treat0DepthPartsAsRoot)
+            {
+                if (Body
+                    ?.LoopParts()
+                    ?.Where(IsEqualDepthToRoot) is IEnumerable<BodyPart> bodyParts)
+                {
+                    foreach (var bodyPart in bodyParts)
+                    {
+                        if (bodyPart.GetLimbTreeBranches(
+                            Selector: GetLimbTreeBranch,
+                            IndentProc: IndentProc ?? (s => "{{y|" + s + "}}"),
+                            BodyPartProc: BodyPartProc ?? InitializeLimbTreeBranch,
+                            IndentDrawing: new Dictionary<int, char>(),
+                            DepthLimit: DepthLimit,
+                            Filter: IsNotEqualDepthToRoot) is IEnumerable<BodyPlan.LimbTreeBranch> limbTreeBranches)
+                            foreach (var limbTreeBranch in limbTreeBranches)
+                                yield return limbTreeBranch;
+                    }
+                }
+            }
+            else
+            {
+                if (Body
+                    ?.GetBody()
+                    .GetLimbTreeBranches(
+                        Selector: GetLimbTreeBranch,
+                        IndentProc: IndentProc ?? (s => "{{y|" + s + "}}"),
+                        BodyPartProc: BodyPartProc ?? InitializeLimbTreeBranch,
+                        IndentDrawing: new Dictionary<int, char>(),
+                        DepthLimit: DepthLimit)
+                    is IEnumerable<BodyPlan.LimbTreeBranch> limbTreeBranches)
+                    foreach (var limbTreeBranch in limbTreeBranches)
+                        yield return limbTreeBranch;
+            }
+        }
+
         public static bool IsShader(this string String)
             => ConsoleLib.Console.MarkupShaders.Shaders.Any(s => s.GetName() == String);
 
@@ -519,5 +685,11 @@ namespace UD_ChooseYourBodyPlan.Mod
         public static bool IsOption(this string String)
             => !String.IsNullOrEmpty()
             && XRL.UI.Options.HasOption(String);
+
+        public static string GetOption(this string OptionID)
+            => XRL.UI.Options.GetOption(OptionID);
+
+        public static bool TryGetOption(this string OptionID, out string OptionState)
+            => !(OptionState = OptionID.GetOption()).IsNullOrEmpty();
     }
 }

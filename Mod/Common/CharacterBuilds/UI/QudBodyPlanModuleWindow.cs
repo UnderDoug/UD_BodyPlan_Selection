@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System.Text;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -6,6 +7,8 @@ using ConsoleLib.Console;
 
 using UnityEngine;
 
+using XRL;
+using XRL.CharacterBuilds;
 using XRL.Collections;
 using XRL.Rules;
 using XRL.UI;
@@ -15,10 +18,7 @@ using ColorUtility = ConsoleLib.Console.ColorUtility;
 using Event = XRL.World.Event;
 
 using UD_ChooseYourBodyPlan.Mod;
-using XRL.CharacterBuilds;
-using XRL;
 using static UD_ChooseYourBodyPlan.Mod.CharacterBuilds.QudBodyPlanModule;
-using System.Text;
 
 namespace UD_ChooseYourBodyPlan.Mod.CharacterBuilds.UI
 {
@@ -29,45 +29,34 @@ namespace UD_ChooseYourBodyPlan.Mod.CharacterBuilds.UI
         UICanvasHost: 1)]
     public partial class QudBodyPlanModuleWindow : EmbarkBuilderModuleWindowPrefabBase<QudBodyPlanModule, CategoryMenusScroller>
     {
-        private struct RandomChoice
+        protected struct RandomChoice
         {
-            public FrameworkDataElement Category;
             public int CategoryIndex;
-            public FrameworkDataElement Choice;
             public int ChoiceIndex;
-            public string Id;
-            public int Weight;
+            public PrefixMenuOption Choice;
 
             public RandomChoice(
-                FrameworkDataElement Category,
+                PrefixMenuOption Choice,
                 int CategoryIndex,
-                FrameworkDataElement Choice,
-                int ChoiceIndex,
-                string Id,
-                int Weight
+                int ChoiceIndex
                 )
             {
-                this.Category = Category;
                 this.CategoryIndex = CategoryIndex;
                 this.Choice = Choice;
                 this.ChoiceIndex = ChoiceIndex;
-                this.Id = Id;
-                this.Weight = Weight;
             }
-        }
-        private class Counter
-        {
-            public int Value;
         }
 
         protected const string COMMAND_SORT_ANATOMIES = "Cmd_UDBPS_SortAnatomies";
         protected const string EMPTY_CHECK = "[ ]";
         protected const string CHECKED = "[■]";
 
+        protected BallBag<RandomChoice> RandomChoiceBag;
+
         // don't remove this. It's what allows the first call to UpdateControls() to actually update the controls.
         public EmbarkBuilderModuleWindowDescriptor windowDescriptor;
 
-        private List<CategoryMenuData> AnatomiesMenuState = new();
+        private List<CategoryMenuData> BodyPlanCategoryMenuOptions = new();
 
         private List<BodyPlanEntry> AnatomyChoices => module?.AnatomyChoices;
 
@@ -123,66 +112,57 @@ namespace UD_ChooseYourBodyPlan.Mod.CharacterBuilds.UI
             return base.InstantiatePrefab(prefab);
         }
 
-        private static IEnumerable<RandomChoice> RandomChoiceSelector(FrameworkDataElement Category, Counter CategoryIndex)
+        protected BallBag<RandomChoice> RefillRandomChoices()
         {
-            if (Category is not IFrameworkDataList frameworkDataList
-                || frameworkDataList.getChildren() is not IEnumerable<FrameworkDataElement> choiceDataElements
-                || choiceDataElements.IsNullOrEmpty())
-                yield break;
+            RandomChoiceBag ??= new();
+            RandomChoiceBag.Clear();
+            if (BodyPlanCategoryMenuOptions.IsNullOrEmpty())
+                return RandomChoiceBag;
 
-            int choiceIndex = 0;
-            foreach (var choiceDataElement in choiceDataElements)
+            for (int i = 0; i < BodyPlanCategoryMenuOptions.Count; i++)
             {
-                yield return new()
-                {
-                    Category = Category,
-                    CategoryIndex = CategoryIndex.Value,
-                    Choice = choiceDataElement,
-                    ChoiceIndex = choiceIndex++,
-                    Id = choiceDataElement.Id,
-                    Weight = BodyPlanEntires
-                            ?.FirstOrDefault(c => c.Anatomy.Name == choiceDataElement.Id)
-                            ?.AnatomyConfigurations is not List<AnatomyConfiguration> anatomyConfigs
-                        || (!anatomyConfigs.IsMechanical()
-                            && !anatomyConfigs.IsDifficult())
-                        ? 5
-                        : 1
-                };
-            }
-            CategoryIndex.Value++;
-            yield break;
-        }
+                if (BodyPlanCategoryMenuOptions[i] is not CategoryMenuData categoryMenuOption
+                    || !categoryMenuOption.menuOptions.IsNullOrEmpty())
+                    continue;
 
-        private static BallBag<RandomChoice> AggregateBallBag(BallBag<RandomChoice> Bag, RandomChoice Ball)
-        {
-            Bag.Add(Ball, Ball.Weight);
-            return Bag;
+                for (int j = 0; j < categoryMenuOption.menuOptions.Count; j++)
+                {
+                    if (categoryMenuOption.menuOptions[j] is not PrefixMenuOption menuOption
+                        || BodyPlanFactory.Factory?.GetBodyPlanEntry(menuOption) is not BodyPlanEntry optionEntry)
+                        continue;
+
+                    RandomChoiceBag.Add(
+                        Item: new RandomChoice
+                        {
+                            Choice = menuOption,
+                            CategoryIndex = i,
+                            ChoiceIndex = j,
+                        },
+                        Weight: optionEntry.RandomWeight);
+                }
+            }
+            return RandomChoiceBag;
         }
 
         public override void RandomSelection()
         {
-            if (AnatomiesMenuState is List<CategoryMenuData> menuCategoryOptions
-                && menuCategoryOptions != null)
+            int categoryIndex = 0;
+            int choiceIndex = 0;
+            PrefixMenuOption choice = BodyPlanCategoryMenuOptions?[0]?.menuOptions?[0];
+            if (RefillRandomChoices().PluckOne() is RandomChoice randomChoice)
             {
-                using var randomChoices = ScopeDisposedList<RandomChoice>.GetFromPool();
-
-                var categoryIndex = new Counter() { Value = 0 };
-                foreach (var category in menuCategoryOptions)
-                    if (RandomChoiceSelector(category, categoryIndex) is IEnumerable<RandomChoice> categoryChoices
-                        && !categoryChoices.IsNullOrEmpty())
-                        randomChoices.AddRange(categoryChoices);
-
-                if (randomChoices.Aggregate(new BallBag<RandomChoice>(), AggregateBallBag).PluckOne() is RandomChoice randomChoice)
-                {
-                    prefabComponent
-                        .ContextFor(randomChoice.CategoryIndex, randomChoice.ChoiceIndex)
-                        .ActivateAndEnable();
-
-                    SelectAnatomy(randomChoice.Choice);
-
-                    HighlightSelected();
-                }
+                categoryIndex = randomChoice.CategoryIndex;
+                choiceIndex = randomChoice.ChoiceIndex;
+                choice = randomChoice.Choice;
             }
+
+            prefabComponent
+                .ContextFor(randomChoice.CategoryIndex, randomChoice.ChoiceIndex)
+                .ActivateAndEnable();
+
+            SelectAnatomy(randomChoice.Choice);
+
+            HighlightSelected();
         }
 
         public override void ResetSelection()
@@ -262,7 +242,7 @@ namespace UD_ChooseYourBodyPlan.Mod.CharacterBuilds.UI
             UpdateControls();
         }
         public void SelectAnatomy(FrameworkDataElement dataElement)
-            => SelectAnatomy(dataElement.Id)
+            => SelectAnatomy(dataElement?.Id)
             ;
         public void SelectDefaultChoice(bool Override = false, bool UpdateControls = true)
         {
@@ -277,41 +257,41 @@ namespace UD_ChooseYourBodyPlan.Mod.CharacterBuilds.UI
                 prefabComponent.onHighlight.Invoke(Selected);
         }
 
-        private PrefixMenuOption MakeMenuOption(BodyPlanEntry Choice, StringBuilder SB, bool IsTK, out bool IsSelected)
+        private PrefixMenuOption MakeMenuOption(BodyPlanEntry Entry, StringBuilder SB, bool IsTK, out bool IsSelected)
         {
             IsSelected = false;
 
-            if (Choice == null)
+            if (Entry == null)
                 return null;
 
-            IsSelected = module.IsSelected(Choice);
+            IsSelected = module.IsSelected(Entry);
 
             if (IsSelected)
-                SB.AppendColored("W", Choice.GetDescription(ShowDefault: !SortByCategory, ShowSymbols: true));
+                SB.AppendColored("W", Entry.GetDescription(ShowDefault: !SortByCategory, ShowSymbols: true));
             else
-                SB.Append(Choice.GetDescription(ShowDefault: !SortByCategory, ShowSymbols: true));
+                SB.Append(Entry.GetDescription(ShowDefault: !SortByCategory, ShowSymbols: true));
 
-            string longDesc = IsTK ? Choice.LongDescriptionTK : Choice.LongDescription;
+            string longDesc = IsTK ? Entry.LongDescriptionTK : Entry.LongDescription;
 
-            if (Choice.IsDefault)
+            if (Entry.IsDefault)
             {
                 if (module?.GenotypeModuleData?.Entry is GenotypeEntry genotypeEntry)
-                    Choice.OverrideRender(new(genotypeEntry));
+                    Entry.OverrideRender(new(genotypeEntry));
                 if (module?.SubtypeModuleData?.Entry is SubtypeEntry subtypeEntry)
-                    Choice.OverrideRender(new(subtypeEntry));
+                    Entry.OverrideRender(new(subtypeEntry));
             }
 
             return new PrefixMenuOption
             {
-                Id = Choice.Anatomy.Name,
+                Id = Entry.Anatomy.Name,
                 Prefix = IsSelected ? CHECKED : EMPTY_CHECK,
                 Description = SB.ToString(),
                 LongDescription = longDesc,
-                Renderable = Choice.GetRenderable()
+                Renderable = Entry.GetRenderable()
             };
         }
 
-        private IEnumerable<PrefixMenuOption> GetMenuOptions(AnatomyCategory Category)
+        private IEnumerable<PrefixMenuOption> GetMenuOptions(AnatomyCategoryEntry Category)
         {
             var sB = Event.NewStringBuilder();
             bool isTK = module?.GenotypeModuleData?.Entry?.IsTrueKin ?? false;
@@ -340,7 +320,7 @@ namespace UD_ChooseYourBodyPlan.Mod.CharacterBuilds.UI
             yield break;
         }
 
-        protected CategoryMenuData MakeCategoryMenuOption(AnatomyCategory Category = null)
+        protected CategoryMenuData MakeCategoryMenuOption(AnatomyCategoryEntry Category = null)
             => new()
             {
                 Title = Category != null ? (Category?.GetDisplayName() ?? "MISSING_DISPLAY_NAME"): "Body Plans",
@@ -355,12 +335,12 @@ namespace UD_ChooseYourBodyPlan.Mod.CharacterBuilds.UI
             }
             else
             {
-                var comparer = AnatomyCategory.DefaultFirstComparer;
+                var comparer = AnatomyCategoryEntry.DefaultFirstComparer;
 
-                using var categories = ScopeDisposedList<AnatomyCategory>.GetFromPoolFilledWith(AnatomyCategory.Categories);
+                using var categories = ScopeDisposedList<AnatomyCategoryEntry>.GetFromPoolFilledWith(AnatomyCategoryEntry.Categories);
                 categories.Sort(comparer);
 
-                foreach (AnatomyCategory category in categories)
+                foreach (AnatomyCategoryEntry category in categories)
                 {
                     Utils.Log(category?.GetDisplayName());
                     if (!Utils.DisableDebug)
@@ -377,19 +357,11 @@ namespace UD_ChooseYourBodyPlan.Mod.CharacterBuilds.UI
 
         public void UpdateControls(bool OverrideHasShown = false)
         {
-            AnatomiesMenuState?.Clear();
-            AnatomiesMenuState = new(GetCategoryMenuOptions());
-            if (AnatomiesMenuState.IsNullOrEmpty())
+            BodyPlanCategoryMenuOptions?.Clear();
+            BodyPlanCategoryMenuOptions = new(GetCategoryMenuOptions());
+            if (BodyPlanCategoryMenuOptions.IsNullOrEmpty())
             {
-                AnatomiesMenuState.AddRange(GetCategoryMenuOptions(ForceNoCategory: true));
-                /*
-                AnatomiesMenuState.Add(
-                    item: new CategoryMenuData
-                    {
-                        Title = "Body Plan",
-                        menuOptions = new() { Selected }
-                    });
-                */
+                BodyPlanCategoryMenuOptions.AddRange(GetCategoryMenuOptions(ForceNoCategory: true));
                 MetricsManager.LogModError(Utils.ThisMod, "Failed to change sort order. Alphabetical used by default.");
             }
 
@@ -400,7 +372,7 @@ namespace UD_ChooseYourBodyPlan.Mod.CharacterBuilds.UI
                 if (OverrideHasShown)
                     prefabComponent.hasShown = false;
 
-                prefabComponent.BeforeShow(windowDescriptor, AnatomiesMenuState);
+                prefabComponent.BeforeShow(windowDescriptor, BodyPlanCategoryMenuOptions);
             }
 
             if (module?.HasSelection ?? false)
