@@ -47,11 +47,7 @@ namespace UD_ChooseYourBodyPlan.Mod
         bool TryLoadFromDataBucket(GameObjectBlueprint DataBucket, out T Result)
             => (Result = LoadFromDataBucket(DataBucket)) != null;
 
-        T Merge(T Other)
-        {
-            Dispose();
-            return Other;
-        }
+        T Merge(T Other);
 
         T Clone();
     }

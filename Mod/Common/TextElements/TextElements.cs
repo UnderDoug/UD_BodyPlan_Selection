@@ -112,16 +112,19 @@ namespace UD_ChooseYourBodyPlan.Mod
             _Symbols.Clear();
             _Symbols = null;
         }
-    }
 
-    public static class TextElementsExtensions
-    {
-        public static IEnumerable<KeyValuePair<string, string>> GetTextElementsTags(this GameObjectBlueprint DataBucket)
+        public TextElements Merge(TextElements Other)
         {
-            string startsWith = $"{nameof(TextElements)}.";
-            int startsWithIndex = startsWith.Length - 1;
-            foreach ((var tagName, var tagValue) in DataBucket.GetTagsStartingWith(startsWith))
-                yield return new(tagName[startsWithIndex..], tagValue);
+            Utils.MergeReplaceField(ref DescriptionBefore, Other.DescriptionBefore);
+            Utils.MergeReplaceField(ref DescriptionAfter, Other.DescriptionAfter);
+            Utils.MergeReplaceField(ref SummaryBefore, Other.SummaryBefore);
+            Utils.MergeReplaceField(ref SummaryAfter, Other.SummaryAfter);
+            IDictionary<string, Symbol> symbolsByName = SymbolsByName;
+            Utils.MergeReplaceDictionary(ref symbolsByName, Other.SymbolsByName);
+            SymbolsByName = symbolsByName as StringMap<Symbol>;
+
+            _Symbols = null;
+            return this;
         }
     }
 }

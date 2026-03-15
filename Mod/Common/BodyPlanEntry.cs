@@ -104,6 +104,8 @@ namespace UD_ChooseYourBodyPlan.Mod
         }
         protected bool WantsTextElements;
 
+        public Dictionary<string, string> Tags;
+
         protected static StringBuilder SB = new();
 
         protected static GameObject SampleCreature = null;
@@ -130,6 +132,8 @@ namespace UD_ChooseYourBodyPlan.Mod
             TextElementsNames = null;
             _TextElements = null;
             WantsTextElements = true;
+
+            Tags = null;
 
             LongDescriptions = null;
         }
@@ -172,6 +176,8 @@ namespace UD_ChooseYourBodyPlan.Mod
             DataBucket.AssignStringFieldFromTag(nameof(CategoryOverride), ref CategoryOverride);
             DataBucket.AssignStringFieldFromTag(nameof(DisplayName), ref DisplayName);
 
+            Render = new BodyPlanRender().LoadFromDataBucket(DataBucket);
+
             OptionDelegates.ParseDataBucket(DataBucket);
 
             if (DataBucket.GetTextElementsTags() is IEnumerable<KeyValuePair<string, string>> textElementsTags)
@@ -181,10 +187,14 @@ namespace UD_ChooseYourBodyPlan.Mod
                     TextElementsNames.Add(textElementsName);
             }
 
+            Tags = new();
+            foreach ((string tagName, string tagValue) in DataBucket.Tags)
+                Tags[tagName] = tagValue;
+
             return this;
         }
 
-        public BodyPlanEntry Merge(BodyPlanEntry OTher)
+        public BodyPlanEntry Merge(BodyPlanEntry Other)
         {
             throw new NotImplementedException();
         }
@@ -221,7 +231,6 @@ namespace UD_ChooseYourBodyPlan.Mod
                     SB.Append(" (default)");
 
                 if (ShowSymbols
-
                     && !AnatomyConfigurations.IsNullOrEmpty()
                     && AnatomyConfigurations.HasSymbols())
                     SB.Append($" {AnatomyConfigurations.Symbols().Aggregate("", (a, n) => a + n)}");
@@ -545,10 +554,20 @@ namespace UD_ChooseYourBodyPlan.Mod
 
             return Render;
         }
-        public void OverrideRenderable(BodyPlanRender Renderable)
+        public void OverrideRender(BodyPlanRender Render)
         {
-            if (Renderable != null)
-                this.Render = Renderable;
+            if (Render != null)
+                this.Render = Render;
+        }
+
+        public bool HasTag(string Name)
+        {
+            throw new NotImplementedException();
+        }
+
+        public string GetTag(string Name)
+        {
+            throw new NotImplementedException();
         }
 
         public bool HasMatchingAnatomy(GameObjectBlueprint Blueprint)
@@ -595,6 +614,7 @@ namespace UD_ChooseYourBodyPlan.Mod
 
         public void Dispose()
         {
+            Render.Dispose();
             Render = null;
 
             OptionDelegates.Clear();
@@ -602,6 +622,9 @@ namespace UD_ChooseYourBodyPlan.Mod
 
             LongDescriptions.Clear();
             LongDescriptions = null;
+
+            Tags.Clear();
+            Tags = null;
         }
     }
 }

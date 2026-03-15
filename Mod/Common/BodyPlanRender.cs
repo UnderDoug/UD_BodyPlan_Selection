@@ -45,7 +45,7 @@ namespace UD_ChooseYourBodyPlan.Mod
 
         public string CacheKey => throw new NotImplementedException();
 
-        public bool HFlip;
+        public bool? HFlip;
 
         public BodyPlanRender()
             : base()
@@ -58,7 +58,7 @@ namespace UD_ChooseYourBodyPlan.Mod
             string ColorString = null,
             string TileColor = null,
             char DetailColor = '\0',
-            bool HFlip = false)
+            bool? HFlip = null)
             : base(
                   Tile: Tile,
                   RenderString: RenderString,
@@ -69,7 +69,7 @@ namespace UD_ChooseYourBodyPlan.Mod
             this.HFlip = HFlip;
         }
 
-        public BodyPlanRender(TransformationData Transformation, bool HFlip = false)
+        public BodyPlanRender(TransformationData Transformation, bool? HFlip = null)
             : this(
                   Tile: Transformation?.Tile,
                   RenderString: Transformation?.RenderString ?? "@",
@@ -99,7 +99,7 @@ namespace UD_ChooseYourBodyPlan.Mod
                   HFlip: true)
         { }
 
-        public BodyPlanRender(Renderable Renderable, bool HFlip = false)
+        public BodyPlanRender(Renderable Renderable, bool? HFlip = null)
             : base(Renderable)
         {
             this.HFlip = HFlip;
@@ -112,7 +112,7 @@ namespace UD_ChooseYourBodyPlan.Mod
         }
 
         public override bool getHFlip()
-            => HFlip;
+            => HFlip.GetValueOrDefault();
 
         private BodyPlanRender LoadFromDataBucketTags(GameObjectBlueprint DataBucket, bool? HFlip = null)
         {
@@ -131,7 +131,8 @@ namespace UD_ChooseYourBodyPlan.Mod
             {
                 if (DataBucket.TryGetTagValueForData(nameof(HFlip), out string hFlip)
                     && !hFlip.EqualsNoCase(Const.REMOVE_TAG))
-                    bool.TryParse(hFlip, out this.HFlip);
+                   if (bool.TryParse(hFlip, out bool hFlipValue))
+                        this.HFlip = hFlipValue;
             }
             else
                 this.HFlip = HFlip.GetValueOrDefault();
@@ -146,7 +147,8 @@ namespace UD_ChooseYourBodyPlan.Mod
                 Set(DataBucket);
                 if (DataBucket.TryGetTagValueForData(nameof(HFlip), out string hFlip)
                     && !hFlip.EqualsNoCase(Const.REMOVE_TAG))
-                    bool.TryParse(hFlip, out HFlip);
+                    if (bool.TryParse(hFlip, out bool hFlipValue))
+                        HFlip = hFlipValue;
             }
             else
                 LoadFromDataBucketTags(DataBucket);
@@ -156,6 +158,17 @@ namespace UD_ChooseYourBodyPlan.Mod
 
         public BodyPlanRender Clone()
             => new(this, HFlip);
+
+        public BodyPlanRender Merge(BodyPlanRender Other)
+        {
+            Utils.MergeReplaceField(ref Tile, Other.Tile);
+            Utils.MergeReplaceField(ref RenderString, Other.RenderString);
+            Utils.MergeReplaceField(ref ColorString, Other.ColorString);
+            Utils.MergeReplaceField(ref TileColor, Other.TileColor);
+            Utils.MergeReplaceField(ref DetailColor, Other.DetailColor);
+            Utils.MergeReplaceField(ref HFlip, Other.HFlip);
+            return this;
+        }
 
         public void Dispose()
         {

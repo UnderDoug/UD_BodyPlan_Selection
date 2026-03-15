@@ -140,7 +140,7 @@ namespace UD_ChooseYourBodyPlan.Mod.CharacterBuilds.UI
                     Choice = choiceDataElement,
                     ChoiceIndex = choiceIndex++,
                     Id = choiceDataElement.Id,
-                    Weight = BaseAnatomyChoices
+                    Weight = BodyPlanEntires
                             ?.FirstOrDefault(c => c.Anatomy.Name == choiceDataElement.Id)
                             ?.AnatomyConfigurations is not List<AnatomyConfiguration> anatomyConfigs
                         || (!anatomyConfigs.IsMechanical()
@@ -296,9 +296,9 @@ namespace UD_ChooseYourBodyPlan.Mod.CharacterBuilds.UI
             if (Choice.IsDefault)
             {
                 if (module?.GenotypeModuleData?.Entry is GenotypeEntry genotypeEntry)
-                    Choice.OverrideRenderable(new(genotypeEntry));
+                    Choice.OverrideRender(new(genotypeEntry));
                 if (module?.SubtypeModuleData?.Entry is SubtypeEntry subtypeEntry)
-                    Choice.OverrideRenderable(new(subtypeEntry));
+                    Choice.OverrideRender(new(subtypeEntry));
             }
 
             return new PrefixMenuOption

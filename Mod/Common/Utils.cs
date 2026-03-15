@@ -223,6 +223,93 @@ namespace UD_ChooseYourBodyPlan.Mod
             : 1
             ;
 
+        public static T MergeReplaceField<T>(ref T Field, T Becomes)
+        {
+            if (!Equals(Becomes, default))
+                Field = Becomes;
+
+            return Field;
+        }
+
+        public static T MergeRequireField<T>(ref T Field, T Becomes)
+        {
+            if (Equals(Field, default))
+				Field = Becomes;
+
+            return Field;
+        }
+
+        public static ICollection<T> MergeReplaceField<T>(ref ICollection<T> Field, ICollection<T> Becomes)
+        {
+            if (!Becomes.IsNullOrEmpty())
+                Field = Becomes;
+
+            return Field;
+        }
+
+        public static ICollection<T> MergeRequireField<T>(ref ICollection<T> Field, ICollection<T> Becomes)
+        {
+            if (Field.IsNullOrEmpty())
+                Field = Becomes;
+
+            return Field;
+        }
+
+        /// <summary>
+        /// "Merge distinct" adds any <paramref name="Other"/> elements that the <paramref name="Source"/> collection doesn't already contain.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="Source"></param>
+        /// <param name="Other"></param>
+        /// <returns></returns>
+        public static ICollection<T> MergeDistinctInCollection<T>(ref ICollection<T> Source, ICollection<T> Other)
+        {
+            Source ??= new List<T>();
+            if (!Other.IsNullOrEmpty())
+                foreach (var element in Other)
+                    if (!Source.Contains(element))
+                        Source.Add(element);
+
+            return Source;
+        }
+
+		/// <summary>
+		/// "Merge replace" adds all <paramref name="Other"/> values to the <paramref name="Source"/> dictionary, overwriting the value of keys already present.
+		/// </summary>
+		/// <typeparam name="TKey"></typeparam>
+		/// <typeparam name="TValue"></typeparam>
+		/// <param name="Source"></param>
+		/// <param name="Other"></param>
+		/// <returns>The modified <paramref name="Source"/> dictionary.</returns>
+		public static IDictionary<TKey, TValue> MergeReplaceDictionary<TKey, TValue>(ref IDictionary<TKey, TValue> Source, IDictionary<TKey, TValue> Other)
+        {
+            Source ??= new Dictionary<TKey, TValue>();
+            if (!Other.IsNullOrEmpty())
+                foreach ((TKey key, TValue value) in Other)
+                    Source[key] = value;
+
+			return Source;
+        }
+
+        /// <summary>
+        /// "Merge require" only adds <paramref name="Other"/> values to keys missing from the <paramref name="Source"/> dictionary, skipping any keys for which there is already a value.
+        /// </summary>
+        /// <typeparam name="TKey"></typeparam>
+        /// <typeparam name="TValue"></typeparam>
+        /// <param name="Source"></param>
+        /// <param name="Other"></param>
+        /// <returns>The modified <paramref name="Source"/> dictionary.</returns>
+        public static IDictionary<TKey, TValue> MergeRequireDictionary<TKey, TValue>(ref IDictionary<TKey, TValue> Source, IDictionary<TKey, TValue> Other)
+        {
+            Source ??= new Dictionary<TKey, TValue>();
+            if (!Other.IsNullOrEmpty())
+                foreach ((TKey key, TValue value) in Other)
+                    if (!Source.ContainsKey(key))
+                        Source[key] = value;
+
+			return Source;
+        }
+
         #region Wishes
 
         public static string UD_CYBP_Output => DataManager.SavePath("BodyPlanEntrys.xml");

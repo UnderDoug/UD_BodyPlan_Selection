@@ -27,8 +27,8 @@ namespace UD_ChooseYourBodyPlan.Mod.CharacterBuilds
 
         private static bool WantClearChoices = false;
 
-        private static IEnumerable<BodyPlanEntry> _BaseAnatomyChoices;
-        public static IEnumerable<BodyPlanEntry> BaseAnatomyChoices => _BaseAnatomyChoices ??= Anatomies.AnatomyList
+        private static IEnumerable<BodyPlanEntry> _BodyPlanEntires;
+        public static IEnumerable<BodyPlanEntry> BodyPlanEntires => _BodyPlanEntires ??= Anatomies.AnatomyList
             ?.Where(IsEligibleAnatomy)
             ?.Select(AnatomyToChoice)
             ?.OrderBy(a => a.Anatomy.Name)
@@ -75,7 +75,7 @@ namespace UD_ChooseYourBodyPlan.Mod.CharacterBuilds
                 {
                     WantClearChoices = false;
                     _AnatomyChoices = new();
-                    _AnatomyChoices.AddRange(BaseAnatomyChoices.Where(AnatomyChoiceIsValid));
+                    _AnatomyChoices.AddRange(BodyPlanEntires.Where(AnatomyChoiceIsValid));
                     if (builder?.handleUIEvent(GetDefaultSelectionUIEvent, _AnatomyChoices) is List<BodyPlanEntry> uIEventChoices)
                         _AnatomyChoices = uIEventChoices;
                     _AnatomyChoices.RemoveAll(c => c?.Anatomy == null);
@@ -369,8 +369,8 @@ namespace UD_ChooseYourBodyPlan.Mod.CharacterBuilds
                     && SubtypeModuleData?.Entry is SubtypeEntry subtypeEntry
                     && subtypeEntry.Tile.Coalesce(genotypeEntry.Tile) is string typeTile
                     && subtypeEntry.DetailColor.Coalesce(genotypeEntry.DetailColor) is string typeDetailColor)
-                    playerChoice.OverrideRenderable(
-                        Renderable: new(
+                    playerChoice.OverrideRender(
+                        Render: new(
                             Tile: typeTile,
                             RenderString: "@",
                             ColorString: $"&Y^{typeDetailColor}",
